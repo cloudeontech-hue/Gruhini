@@ -143,6 +143,7 @@ class _CategoryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChoiceChip(
       avatar: Icon(icon, size: 16),
+      showCheckmark: false,
       label: Text(label, style: const TextStyle(fontSize: 13)),
       selected: selected,
       onSelected: (_) => onSelected(),
