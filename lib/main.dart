@@ -15,6 +15,7 @@ import 'screens/cart_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/splash_screen.dart';
 import 'state/auth_provider.dart';
 import 'state/cart_provider.dart';
 import 'state/customers_provider.dart';
@@ -127,7 +128,7 @@ class AuthGate extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
 
     if (!auth.isLoaded) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const SplashScreen();
     }
 
     switch (auth.role) {
