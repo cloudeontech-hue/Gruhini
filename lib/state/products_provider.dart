@@ -45,6 +45,7 @@ class ProductsProvider extends ChangeNotifier {
       imagePath: resolvedImagePath,
       description: description,
       shopOwnerId: shopOwnerId,
+      imageBytes: imageBytes,
     );
     await supabase.from('products').insert(product.toMap());
     _products.add(product);
@@ -77,6 +78,7 @@ class ProductsProvider extends ChangeNotifier {
     product.unit = unit;
     product.imagePath = resolvedImagePath;
     product.description = description;
+    if (imageBytes != null) product.imageBytes = imageBytes;
     await supabase.from('products').update(product.toMap()).eq('id', id);
     notifyListeners();
   }
