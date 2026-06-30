@@ -8,7 +8,8 @@ class CartProvider extends ChangeNotifier {
 
   List<CartItem> get items => _items.values.toList();
 
-  int get itemCount => _items.values.fold(0, (sum, item) => sum + item.quantity);
+  int get itemCount =>
+      _items.values.fold(0, (sum, item) => sum + item.quantity);
 
   double get total => _items.values.fold(0, (sum, item) => sum + item.subtotal);
 

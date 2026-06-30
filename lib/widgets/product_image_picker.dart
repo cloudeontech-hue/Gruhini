@@ -31,9 +31,9 @@ class ProductImagePicker extends StatelessWidget {
       if (bytes != null) onImagePicked(bytes);
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load image: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not load image: $error')));
       }
     }
   }
@@ -75,7 +75,11 @@ class ProductImagePicker extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: colors.surface, width: 2),
                     ),
-                    child: Icon(Icons.camera_alt, size: 16, color: colors.onPrimary),
+                    child: Icon(
+                      Icons.camera_alt,
+                      size: 16,
+                      color: colors.onPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -105,14 +109,16 @@ class ProductImagePicker extends StatelessWidget {
               fit: BoxFit.cover,
               width: 110,
               height: 110,
-              errorBuilder: (context, error, stackTrace) => _placeholderIcon(context),
+              errorBuilder: (context, error, stackTrace) =>
+                  _placeholderIcon(context),
             )
           : Image.asset(
               imagePath,
               fit: BoxFit.cover,
               width: 110,
               height: 110,
-              errorBuilder: (context, error, stackTrace) => _placeholderIcon(context),
+              errorBuilder: (context, error, stackTrace) =>
+                  _placeholderIcon(context),
             );
     }
     return _placeholderIcon(context);

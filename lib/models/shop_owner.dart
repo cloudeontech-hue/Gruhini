@@ -16,9 +16,9 @@ class ShopOwner {
   /// though the database itself doesn't enforce that restriction (see
   /// scripts/supabase_schema_shop_owners.sql).
   factory ShopOwner.fromMap(Map<String, dynamic> map) => ShopOwner(
-        id: map['id'] as String,
-        username: map['username'] as String,
-        shopName: map['shop_name'] as String,
-        createdAt: DateTime.parse(map['created_at'] as String),
-      );
+    id: map['id'] as String,
+    username: map['username'] as String,
+    shopName: map['shop_name'] as String,
+    createdAt: DateTime.parse(map['created_at'] as String),
+  );
 }

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/customers_provider.dart';
+import '../../utils/app_colors.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/responsive_center.dart';
 
 class AdminCustomersScreen extends StatefulWidget {
   const AdminCustomersScreen({super.key});
@@ -36,24 +39,42 @@ class _AdminCustomersScreenState extends State<AdminCustomersScreen> {
           ),
         ),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: customers.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final customer = customers[index];
-              return Card(
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Text(customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?'),
+          child: customers.isEmpty
+              ? const EmptyState(
+                  icon: Icons.people_outline,
+                  title: 'No customers found',
+                  subtitle:
+                      'Customers will appear here once they place an order.',
+                )
+              : ResponsiveCenter(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: customers.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final customer = customers[index];
+                      return Card(
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.goldLight,
+                            foregroundColor: AppColors.brand,
+                            child: Text(
+                              customer.name.isNotEmpty
+                                  ? customer.name[0].toUpperCase()
+                                  : '?',
+                            ),
+                          ),
+                          title: Text(customer.name),
+                          subtitle: Text(
+                            '${customer.phone}\n${customer.address}',
+                          ),
+                          isThreeLine: true,
+                        ),
+                      );
+                    },
                   ),
-                  title: Text(customer.name),
-                  subtitle: Text('${customer.phone}\n${customer.address}'),
-                  isThreeLine: true,
                 ),
-              );
-            },
-          ),
         ),
       ],
     );

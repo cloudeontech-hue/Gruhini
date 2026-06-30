@@ -1,93 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../state/auth_provider.dart';
+import 'checkout/delivery_address_screen.dart';
 import '../state/cart_provider.dart';
-import '../state/orders_provider.dart';
 import '../state/products_provider.dart';
+import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/product_image.dart';
+import '../widgets/responsive_center.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
-
-  /// Delivery address is required to place an order. If the customer
-  /// already has one on file (set previously via Profile or a past
-  /// checkout), this is a no-op; otherwise it blocks checkout until one is
-  /// entered.
-  Future<bool> _ensureAddress(BuildContext context, AuthProvider auth) async {
-    if (auth.customerAddress.trim().isNotEmpty) return true;
-
-    final controller = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    final address = await showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delivery Address Required'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            maxLines: 3,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Address'),
-            validator: (value) =>
-                (value == null || value.trim().isEmpty) ? 'Required' : null,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              Navigator.of(dialogContext).pop(controller.text.trim());
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    if (address == null) return false;
-    await auth.updateCustomerAddress(address);
-    return true;
-  }
-
-  Future<void> _checkout(BuildContext context) async {
-    final cart = context.read<CartProvider>();
-    final auth = context.read<AuthProvider>();
-    final orders = context.read<OrdersProvider>();
-
-    if (!await _ensureAddress(context, auth)) return;
-    if (!context.mounted) return;
-
-    try {
-      final placedOrders = await orders.placeOrder(
-        cartItems: cart.items,
-        customerName: auth.customerName,
-        customerPhone: auth.customerPhone,
-      );
-      cart.clear();
-
-      if (context.mounted) {
-        final message = placedOrders.length > 1
-            ? '${placedOrders.length} orders placed successfully!'
-            : 'Order placed successfully!';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      }
-    } catch (error) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not place order: $error')),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,73 +24,142 @@ class CartScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Cart')),
       body: items.isEmpty
-          ? const Center(child: Text('Your cart is empty.'))
+          ? const EmptyState(
+              icon: Icons.shopping_cart_outlined,
+              title: 'Your cart is empty',
+              subtitle:
+                  'Add some homemade snacks, sweets or pickles to get started.',
+            )
           : Column(
               children: [
+                Container(
+                  width: double.infinity,
+                  color: AppColors.goldLight,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.local_shipping_outlined,
+                        size: 16,
+                        color: AppColors.brand,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Free delivery on orders above ₹500',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.brand,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: items.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final item = items[index];
-                      return Card(
-                        child: ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: ProductImage(product: item.product),
+                  child: ResponsiveCenter(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: items.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return Card(
+                          child: ListTile(
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: ProductImage(product: item.product),
+                              ),
+                            ),
+                            title: Text(item.product.name),
+                            subtitle: Text(
+                              '${formatPrice(item.product.price)} · ${item.product.unit}',
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                  onPressed: () =>
+                                      cart.decrement(item.product.id),
+                                ),
+                                Text('${item.quantity}'),
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  onPressed: () => cart.add(item.product),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  tooltip: 'Remove',
+                                  onPressed: () => cart.remove(item.product.id),
+                                ),
+                              ],
                             ),
                           ),
-                          title: Text(item.product.name),
-                          subtitle:
-                              Text('${formatPrice(item.product.price)} · ${item.product.unit}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove_circle_outline),
-                                onPressed: () => cart.decrement(item.product.id),
-                              ),
-                              Text('${item.quantity}'),
-                              IconButton(
-                                icon: const Icon(Icons.add_circle_outline),
-                                onPressed: () => cart.add(item.product),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
                 SafeArea(
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: ResponsiveCenter(
+                      maxWidth: 720,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
                             children: [
-                              Text('Total', style: Theme.of(context).textTheme.bodyMedium),
+                              const Expanded(child: Text('Subtotal')),
+                              Text(formatPrice(cart.total)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Expanded(child: Text('Delivery Fee')),
                               Text(
-                                formatPrice(cart.total),
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                'Free',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        FilledButton(
-                          onPressed: () => _checkout(context),
-                          child: const Text('Place Order'),
-                        ),
-                      ],
+                          const Divider(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Total',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
+                                ),
+                              ),
+                              Text(
+                                formatPrice(cart.total),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const DeliveryAddressScreen(),
+                              ),
+                            ),
+                            child: const Text('Proceed to Checkout'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

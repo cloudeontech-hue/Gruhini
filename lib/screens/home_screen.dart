@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../models/product.dart';
 import '../state/cart_provider.dart';
 import '../state/products_provider.dart';
+import '../utils/app_colors.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/product_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,15 +34,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final filtered = products.where((p) {
       final matchesQuery = p.name.toLowerCase().contains(_query.toLowerCase());
-      final matchesCategory = _selectedCategory == null || p.category == _selectedCategory;
+      final matchesCategory =
+          _selectedCategory == null || p.category == _selectedCategory;
       return matchesQuery && matchesCategory;
     }).toList();
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         toolbarHeight: 52,
-        title: const Text('Gruhini Foods', style: TextStyle(fontSize: 18)),
+        title: const Text('Gruhini Foods'),
         actions: [
           IconButton(
             onPressed: widget.onCartTap,
@@ -62,10 +65,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: InputDecoration(
                   isDense: true,
                   hintText: 'Search snacks, sweets, pickles...',
-                  hintStyle: const TextStyle(fontSize: 14),
-                  prefixIcon: const Icon(Icons.search, size: 20),
+                  hintStyle: Theme.of(context).textTheme.bodyMedium,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  fillColor: AppColors.creamDark.withValues(alpha: 0.6),
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
@@ -75,6 +82,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 onChanged: (value) => setState(() => _query = value),
               ),
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: _PromoBanner(),
           ),
           SizedBox(
             height: 40,
@@ -97,22 +108,124 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: _categoryIcons[category]!,
                   label: category.label,
                   selected: _selectedCategory == category,
-                  onSelected: () => setState(() => _selectedCategory = category),
+                  onSelected: () =>
+                      setState(() => _selectedCategory = category),
                 );
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Popular Products',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ),
           Expanded(
             child: filtered.isEmpty
-                ? const Center(child: Text('No items found.'))
-                : GridView.count(
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.74,
-                    children: filtered.map((p) => ProductCard(product: p)).toList(),
+                ? const EmptyState(
+                    icon: Icons.search_off,
+                    title: 'No items found',
+                    subtitle: 'Try a different search term or category.',
+                  )
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Widen the grid on tablet/desktop/web instead of
+                      // stretching 2 cards across the full available width.
+                      final width = constraints.maxWidth;
+                      final crossAxisCount = width >= 1100
+                          ? 5
+                          : width >= 860
+                          ? 4
+                          : width >= 600
+                          ? 3
+                          : 2;
+                      return GridView.count(
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 0.74,
+                        children: filtered
+                            .map((p) => ProductCard(product: p))
+                            .toList(),
+                      );
+                    },
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PromoBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      height: 96,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [AppColors.brand, AppColors.brandDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: AppColors.gold.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Freshly Homemade',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Just for You!',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.goldLight,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 64,
+            height: 64,
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+            ),
+            child: ClipOval(
+              child: Container(
+                color: Colors.white,
+                child: SvgPicture.asset(
+                  'assets/images/logo.svg',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -144,7 +257,7 @@ class _CategoryChip extends StatelessWidget {
     return ChoiceChip(
       avatar: Icon(icon, size: 16),
       showCheckmark: false,
-      label: Text(label, style: const TextStyle(fontSize: 13)),
+      label: Text(label),
       selected: selected,
       onSelected: (_) => onSelected(),
       visualDensity: VisualDensity.compact,

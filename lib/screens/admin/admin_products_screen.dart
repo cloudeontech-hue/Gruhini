@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
@@ -8,8 +7,10 @@ import '../../state/auth_provider.dart';
 import '../../state/products_provider.dart';
 import '../../state/shop_owners_provider.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/product_image.dart';
 import '../../widgets/product_image_picker.dart';
+import '../../widgets/responsive_center.dart';
 
 class AdminProductsScreen extends StatelessWidget {
   const AdminProductsScreen({super.key});
@@ -33,7 +34,9 @@ class AdminProductsScreen extends StatelessWidget {
     final isHeadAdmin = auth.role == AppRole.headAdmin;
     final products = isHeadAdmin
         ? productsProvider.products
-        : productsProvider.products.where((p) => p.shopOwnerId == auth.shopOwnerId).toList();
+        : productsProvider.products
+              .where((p) => p.shopOwnerId == auth.shopOwnerId)
+              .toList();
 
     return Scaffold(
       floatingActionButton: isHeadAdmin
@@ -43,67 +46,81 @@ class AdminProductsScreen extends StatelessWidget {
               child: const Icon(Icons.add),
             ),
       body: products.isEmpty
-          ? const Center(child: Text('No products yet.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: products.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return Card(
-                  child: ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: ProductImage(product: product),
+          ? const EmptyState(
+              icon: Icons.inventory_2_outlined,
+              title: 'No products yet',
+              subtitle: 'Products added by shop owners will appear here.',
+            )
+          : ResponsiveCenter(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: products.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return Card(
+                    child: ListTile(
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: ProductImage(product: product),
+                        ),
+                      ),
+                      title: Text(product.name),
+                      subtitle: Text(
+                        isHeadAdmin
+                            ? '${shopOwnersProvider.shopNameFor(product.shopOwnerId)} · '
+                                  '${formatPrice(product.price)} · ${product.unit}\n'
+                                  '${product.inStock ? "In Stock" : "Out of Stock"}'
+                            : '${product.category.label} · ${formatPrice(product.price)} · ${product.unit}\n'
+                                  '${product.inStock ? "In Stock" : "Out of Stock"}',
+                      ),
+                      isThreeLine: true,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!isHeadAdmin)
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined),
+                              tooltip: 'Edit',
+                              onPressed: () =>
+                                  _openProductForm(context, product: product),
+                            ),
+                          PopupMenuButton<String>(
+                            onSelected: (value) {
+                              final provider = context.read<ProductsProvider>();
+                              switch (value) {
+                                case 'stock':
+                                  provider.toggleStock(product.id);
+                                  break;
+                                case 'delete':
+                                  provider.deleteProduct(product.id);
+                                  break;
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'stock',
+                                child: Text(
+                                  product.inStock
+                                      ? 'Mark Out of Stock'
+                                      : 'Mark In Stock',
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    title: Text(product.name),
-                    subtitle: Text(
-                      isHeadAdmin
-                          ? '${shopOwnersProvider.shopNameFor(product.shopOwnerId)} · '
-                              '${formatPrice(product.price)} · ${product.unit}\n'
-                              '${product.inStock ? "In Stock" : "Out of Stock"}'
-                          : '${product.category.label} · ${formatPrice(product.price)} · ${product.unit}\n'
-                              '${product.inStock ? "In Stock" : "Out of Stock"}',
-                    ),
-                    isThreeLine: true,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (!isHeadAdmin)
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined),
-                            tooltip: 'Edit',
-                            onPressed: () => _openProductForm(context, product: product),
-                          ),
-                        PopupMenuButton<String>(
-                          onSelected: (value) {
-                            final provider = context.read<ProductsProvider>();
-                            switch (value) {
-                              case 'stock':
-                                provider.toggleStock(product.id);
-                                break;
-                              case 'delete':
-                                provider.deleteProduct(product.id);
-                                break;
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: 'stock',
-                              child: Text(product.inStock ? 'Mark Out of Stock' : 'Mark In Stock'),
-                            ),
-                            const PopupMenuItem(value: 'delete', child: Text('Delete')),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
     );
   }
@@ -120,12 +137,20 @@ class _ProductFormDialog extends StatefulWidget {
 
 class _ProductFormDialogState extends State<_ProductFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final _nameController = TextEditingController(text: widget.product?.name);
-  late final _priceController =
-      TextEditingController(text: widget.product?.price.toStringAsFixed(0));
-  late final _unitController = TextEditingController(text: widget.product?.unit);
-  late final _descriptionController = TextEditingController(text: widget.product?.description);
-  late ProductCategory _category = widget.product?.category ?? ProductCategory.snacks;
+  late final _nameController = TextEditingController(
+    text: widget.product?.name,
+  );
+  late final _priceController = TextEditingController(
+    text: widget.product?.price.toStringAsFixed(0),
+  );
+  late final _unitController = TextEditingController(
+    text: widget.product?.unit,
+  );
+  late final _descriptionController = TextEditingController(
+    text: widget.product?.description,
+  );
+  late ProductCategory _category =
+      widget.product?.category ?? ProductCategory.snacks;
   late final String _imagePath = widget.product?.imagePath ?? '';
   Uint8List? _imageBytes;
 
@@ -213,14 +238,17 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<ProductCategory>(
                 initialValue: _category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: ProductCategory.values
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
+                    .map(
+                      (c) => DropdownMenuItem(value: c, child: Text(c.label)),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _category = v!),
               ),
@@ -229,24 +257,33 @@ class _ProductFormDialogState extends State<_ProductFormDialog> {
                 controller: _priceController,
                 decoration: const InputDecoration(labelText: 'Price (₹)'),
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                ],
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Required';
-                  if (double.tryParse(v.trim()) == null) return 'Enter a valid number';
+                  if (double.tryParse(v.trim()) == null) {
+                    return 'Enter a valid number';
+                  }
                   return null;
                 },
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _unitController,
-                decoration: const InputDecoration(labelText: 'Unit (e.g. 250g pack)'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Unit (e.g. 250g pack)',
+                ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(
+                  labelText: 'Description (Optional)',
+                ),
                 maxLines: 3,
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
             ],
           ),

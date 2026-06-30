@@ -14,10 +14,17 @@ class ProductsProvider extends ChangeNotifier {
   bool get isLoaded => _isLoaded;
 
   Future<void> load() async {
-    final rows = await supabase.from('products').select();
-    _products
-      ..clear()
-      ..addAll(rows.map(Product.fromMap));
+    try {
+      final rows = await supabase.from('products').select();
+      _products
+        ..clear()
+        ..addAll(rows.map(Product.fromMap));
+    } catch (error) {
+      // Don't leave isLoaded stuck false on a backend hiccup - that would
+      // freeze every screen that gates on this provider in a permanent
+      // loading spinner.
+      debugPrint('Could not load products: $error');
+    }
     _isLoaded = true;
     notifyListeners();
   }
@@ -32,9 +39,11 @@ class ProductsProvider extends ChangeNotifier {
     required String shopOwnerId,
     Uint8List? imageBytes,
   }) async {
-    final id = 'p${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-    final resolvedImagePath =
-        imageBytes != null ? await uploadProductImage(id, imageBytes) : imagePath;
+    final id =
+        'p${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
+    final resolvedImagePath = imageBytes != null
+        ? await uploadProductImage(id, imageBytes)
+        : imagePath;
 
     final product = Product(
       id: id,
@@ -69,8 +78,9 @@ class ProductsProvider extends ChangeNotifier {
     final product = _products.where((p) => p.id == id).firstOrNull;
     if (product == null) return;
 
-    final resolvedImagePath =
-        imageBytes != null ? await uploadProductImage(id, imageBytes) : imagePath;
+    final resolvedImagePath = imageBytes != null
+        ? await uploadProductImage(id, imageBytes)
+        : imagePath;
 
     product.name = name;
     product.category = category;
@@ -87,7 +97,10 @@ class ProductsProvider extends ChangeNotifier {
     final product = _products.where((p) => p.id == id).firstOrNull;
     if (product == null) return;
     product.inStock = !product.inStock;
-    await supabase.from('products').update({'in_stock': product.inStock}).eq('id', id);
+    await supabase
+        .from('products')
+        .update({'in_stock': product.inStock})
+        .eq('id', id);
     notifyListeners();
   }
 

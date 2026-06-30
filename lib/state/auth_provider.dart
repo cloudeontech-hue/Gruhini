@@ -18,6 +18,7 @@ class AuthProvider extends ChangeNotifier {
   static const _customerNameKey = 'customer_name';
   static const _customerPhoneKey = 'customer_phone';
   static const _customerAddressKey = 'customer_address';
+  static const _customerPasswordKey = 'customer_password';
   static const _shopOwnerIdKey = 'shop_owner_id';
   static const _shopOwnerNameKey = 'shop_owner_name';
   static const _shopNameKey = 'shop_name';
@@ -32,6 +33,7 @@ class AuthProvider extends ChangeNotifier {
   String _customerName = '';
   String _customerPhone = '';
   String _customerAddress = '';
+  String _customerPassword = '';
   String _shopOwnerId = '';
   String _shopOwnerUsername = '';
   String _shopName = '';
@@ -41,6 +43,7 @@ class AuthProvider extends ChangeNotifier {
   String get customerName => _customerName;
   String get customerPhone => _customerPhone;
   String get customerAddress => _customerAddress;
+  String get customerPassword => _customerPassword;
   String get shopOwnerId => _shopOwnerId;
   String get shopOwnerUsername => _shopOwnerUsername;
   String get shopName => _shopName;
@@ -56,6 +59,7 @@ class AuthProvider extends ChangeNotifier {
     _customerName = prefs.getString(_customerNameKey) ?? '';
     _customerPhone = prefs.getString(_customerPhoneKey) ?? '';
     _customerAddress = prefs.getString(_customerAddressKey) ?? '';
+    _customerPassword = prefs.getString(_customerPasswordKey) ?? '';
     _shopOwnerId = prefs.getString(_shopOwnerIdKey) ?? '';
     _shopOwnerUsername = prefs.getString(_shopOwnerNameKey) ?? '';
     _shopName = prefs.getString(_shopNameKey) ?? '';
@@ -66,15 +70,28 @@ class AuthProvider extends ChangeNotifier {
   Future<void> loginAsCustomer({
     required String name,
     required String phone,
+    required String password,
   }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedPhone = prefs.getString(_customerPhoneKey) ?? '';
+    final storedPassword = prefs.getString(_customerPasswordKey) ?? '';
+
+    // Returning customer on the same device: verify their password.
+    if (storedPhone == phone && storedPassword.isNotEmpty) {
+      if (storedPassword != password) {
+        throw AuthException('Incorrect password. Please try again.');
+      }
+    }
+
     _role = AppRole.customer;
     _customerName = name;
     _customerPhone = phone;
-    final prefs = await SharedPreferences.getInstance();
+    _customerPassword = password;
     await prefs.setString(_roleKey, _role.name);
     await prefs.setString(_customerNameKey, name);
     await prefs.setString(_customerPhoneKey, phone);
-    await _saveNewCustomer(name: name, phone: phone);
+    await prefs.setString(_customerPasswordKey, password);
+    await _saveNewCustomer(name: name, phone: phone, address: _customerAddress);
     notifyListeners();
   }
 
@@ -82,15 +99,23 @@ class AuthProvider extends ChangeNotifier {
   /// show up in the head admin's Customers screen — keyed by phone number,
   /// the natural unique id customers log in with. Returning customers
   /// (phone already on file) are left untouched.
-  Future<void> _saveNewCustomer({required String name, required String phone}) async {
+  Future<void> _saveNewCustomer({
+    required String name,
+    required String phone,
+    required String address,
+  }) async {
     try {
-      final existing =
-          await supabase.from('customers').select('id').eq('id', phone).maybeSingle();
+      final existing = await supabase
+          .from('customers')
+          .select('id')
+          .eq('id', phone)
+          .maybeSingle();
       if (existing != null) return;
       await supabase.from('customers').insert({
         'id': phone,
         'name': name,
         'phone': phone,
+        'address': address,
       });
     } catch (error) {
       // Customer login is otherwise local-only (SharedPreferences); don't
@@ -98,6 +123,24 @@ class AuthProvider extends ChangeNotifier {
       // logging in just because we couldn't sync them to the admin list.
       debugPrint('Could not save customer record: $error');
     }
+  }
+
+  /// Resets the password for the customer whose phone is stored on this
+  /// device. Throws [AuthException] if the phone doesn't match.
+  Future<void> resetCustomerPassword({
+    required String phone,
+    required String newPassword,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedPhone = prefs.getString(_customerPhoneKey) ?? '';
+    if (storedPhone.isEmpty || storedPhone != phone) {
+      throw AuthException(
+        'No account found with this phone number on this device.',
+      );
+    }
+    _customerPassword = newPassword;
+    await prefs.setString(_customerPasswordKey, newPassword);
+    notifyListeners();
   }
 
   Future<void> updateCustomerPhone(String phone) async {
@@ -135,10 +178,15 @@ class AuthProvider extends ChangeNotifier {
     required String username,
     required String password,
   }) async {
-    final rows = await supabase.rpc('authenticate_shop_owner', params: {
-      'p_username': username.trim(),
-      'p_password_hash': hashPassword(password),
-    }) as List;
+    final rows =
+        await supabase.rpc(
+              'authenticate_shop_owner',
+              params: {
+                'p_username': username.trim(),
+                'p_password_hash': hashPassword(password),
+              },
+            )
+            as List;
 
     if (rows.isEmpty) {
       throw AuthException('Invalid shop owner username or password.');
@@ -163,6 +211,7 @@ class AuthProvider extends ChangeNotifier {
     _customerName = '';
     _customerPhone = '';
     _customerAddress = '';
+    _customerPassword = '';
     _shopOwnerId = '';
     _shopOwnerUsername = '';
     _shopName = '';
@@ -171,6 +220,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.remove(_customerNameKey);
     await prefs.remove(_customerPhoneKey);
     await prefs.remove(_customerAddressKey);
+    await prefs.remove(_customerPasswordKey);
     await prefs.remove(_shopOwnerIdKey);
     await prefs.remove(_shopOwnerNameKey);
     await prefs.remove(_shopNameKey);

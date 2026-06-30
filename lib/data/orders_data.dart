@@ -7,6 +7,7 @@ final List<Order> ordersData = [
     id: 'o1',
     customerName: 'Asha Rao',
     customerPhone: '9876543210',
+    deliveryAddress: '12 MG Road, Bengaluru - 560001',
     items: const [
       OrderLineItem(productName: 'Murukku', price: 120, quantity: 2),
       OrderLineItem(productName: 'Banana Chips', price: 90, quantity: 1),
@@ -15,11 +16,14 @@ final List<Order> ordersData = [
     placedAt: DateTime(2026, 6, 18),
     shopOwnerId: defaultShopOwnerId,
     status: OrderStatus.delivered,
+    paymentStatus: PaymentStatus.verified,
+    paymentVerified: true,
   ),
   Order(
     id: 'o2',
     customerName: 'Asha Rao',
     customerPhone: '9876543210',
+    deliveryAddress: '12 MG Road, Bengaluru - 560001',
     items: const [
       OrderLineItem(productName: 'Mysore Pak', price: 180, quantity: 1),
       OrderLineItem(productName: 'Badam Milk', price: 150, quantity: 1),
@@ -27,6 +31,8 @@ final List<Order> ordersData = [
     total: 330,
     placedAt: DateTime(2026, 6, 20),
     shopOwnerId: defaultShopOwnerId,
-    status: OrderStatus.packed,
+    status: OrderStatus.preparing,
+    paymentStatus: PaymentStatus.verified,
+    paymentVerified: true,
   ),
 ];

@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../state/auth_provider.dart';
 
-enum _LoginAs { headAdmin, shopOwner }
-
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
 
@@ -17,7 +15,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isSubmitting = false;
-  _LoginAs _loginAs = _LoginAs.shopOwner;
 
   @override
   void dispose() {
@@ -31,26 +28,20 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final auth = context.read<AuthProvider>();
-      if (_loginAs == _LoginAs.headAdmin) {
-        await auth.loginAsHeadAdmin(
-          username: _usernameController.text,
-          password: _passwordController.text,
-        );
-      } else {
-        await auth.loginAsShopOwner(
-          username: _usernameController.text,
-          password: _passwordController.text,
-        );
-      }
-      // AdminLoginScreen was reached via Navigator.push from the customer
-      // login screen, so it stays on top of the stack even after AuthGate's
-      // root content switches to AdminRootScreen. Pop it so that root is
-      // actually visible.
+      await context.read<AuthProvider>().loginAsHeadAdmin(
+        username: _usernameController.text,
+        password: _passwordController.text,
+      );
+      // AdminLoginScreen was reached via Navigator.push from the role
+      // selection screen, so it stays on top of the stack even after
+      // AuthGate's root content switches to AdminRootScreen. Pop it so
+      // that root is actually visible.
       if (mounted) Navigator.of(context).pop();
     } on AuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -83,29 +74,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 24),
-                  SegmentedButton<_LoginAs>(
-                    segments: const [
-                      ButtonSegment(
-                        value: _LoginAs.shopOwner,
-                        label: Text('Shop Owner'),
-                        icon: Icon(Icons.storefront_outlined),
-                      ),
-                      ButtonSegment(
-                        value: _LoginAs.headAdmin,
-                        label: Text('Head Admin'),
-                        icon: Icon(Icons.shield_outlined),
-                      ),
-                    ],
-                    selected: {_loginAs},
-                    onSelectionChanged: (selection) =>
-                        setState(() => _loginAs = selection.first),
-                  ),
-                  const SizedBox(height: 24),
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(labelText: 'Username'),
                     validator: (value) =>
-                        (value == null || value.trim().isEmpty) ? 'Required' : null,
+                        (value == null || value.trim().isEmpty)
+                        ? 'Required'
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(

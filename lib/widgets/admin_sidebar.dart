@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../utils/app_colors.dart';
 
 class AdminSidebar extends StatelessWidget {
   final List<String> titles;
@@ -28,26 +31,52 @@ class AdminSidebar extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Material(
-      color: theme.colorScheme.surfaceContainerLow,
+      color: theme.cardTheme.color ?? theme.colorScheme.surfaceContainerLow,
       child: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+              decoration: const BoxDecoration(
+                color: AppColors.brand,
+                border: Border(
+                  bottom: BorderSide(color: AppColors.gold, width: 2),
+                ),
+              ),
               child: Row(
                 children: [
-                  Icon(Icons.storefront, color: theme.colorScheme.primary, size: 28),
-                  const SizedBox(width: 10),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: SvgPicture.asset(
+                        'assets/images/logo.svg',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Gruhini Foods\nAdmin',
-                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
@@ -55,24 +84,51 @@ class AdminSidebar extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final title = titles[index];
                   final selected = index == selectedIndex;
-                  final color =
-                      selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant;
+                  final color = selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant;
 
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: ListTile(
-                      selected: selected,
-                      selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      leading: Icon(_icons[title] ?? Icons.circle_outlined, color: color),
-                      title: Text(
-                        title,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: selected
+                            ? const Border(
+                                left: BorderSide(
+                                  color: AppColors.gold,
+                                  width: 3,
+                                ),
+                              )
+                            : const Border(
+                                left: BorderSide(
+                                  color: Colors.transparent,
+                                  width: 3,
+                                ),
+                              ),
                       ),
-                      onTap: () => onItemSelected(index),
+                      child: ListTile(
+                        selected: selected,
+                        selectedTileColor: theme.colorScheme.primary.withValues(
+                          alpha: 0.12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        leading: Icon(
+                          _icons[title] ?? Icons.circle_outlined,
+                          color: color,
+                        ),
+                        title: Text(
+                          title,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: color,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                        onTap: () => onItemSelected(index),
+                      ),
                     ),
                   );
                 },
@@ -82,12 +138,17 @@ class AdminSidebar extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(8),
               child: ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 hoverColor: theme.colorScheme.error.withValues(alpha: 0.08),
                 leading: Icon(Icons.logout, color: theme.colorScheme.error),
                 title: Text(
                   'Logout',
-                  style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.w600),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 onTap: onLogout,
               ),

@@ -14,18 +14,18 @@ class Customer {
   });
 
   factory Customer.fromMap(Map<String, dynamic> map) => Customer(
-        id: map['id'] as String,
-        name: map['name'] as String,
-        phone: map['phone'] as String,
-        address: map['address'] as String,
-        joinedDate: DateTime.parse(map['joined_date'] as String),
-      );
+    id: map['id'] as String,
+    name: map['name'] as String,
+    phone: map['phone'] as String,
+    address: map['address'] as String,
+    joinedDate: DateTime.parse(map['joined_date'] as String),
+  );
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'name': name,
-        'phone': phone,
-        'address': address,
-        'joined_date': joinedDate.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'phone': phone,
+    'address': address,
+    'joined_date': joinedDate.toIso8601String(),
+  };
 }

@@ -9,7 +9,11 @@ class ProductImage extends StatelessWidget {
   final Product product;
   final BoxFit fit;
 
-  const ProductImage({super.key, required this.product, this.fit = BoxFit.cover});
+  const ProductImage({
+    super.key,
+    required this.product,
+    this.fit = BoxFit.cover,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +31,14 @@ class ProductImage extends StatelessWidget {
           ? Image.network(
               path,
               fit: fit,
-              errorBuilder: (context, error, stackTrace) => _placeholder(context),
+              errorBuilder: (context, error, stackTrace) =>
+                  _placeholder(context),
             )
           : Image.asset(
               path,
               fit: fit,
-              errorBuilder: (context, error, stackTrace) => _placeholder(context),
+              errorBuilder: (context, error, stackTrace) =>
+                  _placeholder(context),
             );
     }
     return _placeholder(context);

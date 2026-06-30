@@ -14,7 +14,8 @@ final List<Product> productsData = [
     price: 120,
     unit: '250g pack',
     imagePath: '$_imageBase/murukku.jpg',
-    description: 'Crunchy spiral snack made from rice flour and urad dal flour, fried fresh.',
+    description:
+        'Crunchy spiral snack made from rice flour and urad dal flour, fried fresh.',
     shopOwnerId: defaultShopOwnerId,
   ),
   Product(
@@ -24,7 +25,8 @@ final List<Product> productsData = [
     price: 90,
     unit: '200g pack',
     imagePath: '$_imageBase/banana_chips.jpg',
-    description: 'Thin, crispy fried raw banana slices seasoned with turmeric and salt.',
+    description:
+        'Thin, crispy fried raw banana slices seasoned with turmeric and salt.',
     shopOwnerId: defaultShopOwnerId,
   ),
   Product(
@@ -44,7 +46,8 @@ final List<Product> productsData = [
     price: 140,
     unit: '200g pack',
     imagePath: '$_imageBase/ragi_cookies.jpg',
-    description: 'Wholesome, crumbly cookies made with finger millet (ragi) flour and jaggery.',
+    description:
+        'Wholesome, crumbly cookies made with finger millet (ragi) flour and jaggery.',
     shopOwnerId: defaultShopOwnerId,
   ),
   Product(
@@ -54,7 +57,8 @@ final List<Product> productsData = [
     price: 180,
     unit: '250g box',
     imagePath: '$_imageBase/mysore_pak.jpg',
-    description: 'A rich, melt-in-the-mouth sweet made from gram flour, ghee, and sugar.',
+    description:
+        'A rich, melt-in-the-mouth sweet made from gram flour, ghee, and sugar.',
     shopOwnerId: defaultShopOwnerId,
   ),
   Product(
@@ -64,7 +68,8 @@ final List<Product> productsData = [
     price: 150,
     unit: '500ml bottle',
     imagePath: '$_imageBase/badam_milk.jpg',
-    description: 'Traditional chilled almond milk, slow-simmered with saffron and cardamom.',
+    description:
+        'Traditional chilled almond milk, slow-simmered with saffron and cardamom.',
     shopOwnerId: defaultShopOwnerId,
   ),
   Product(
@@ -84,7 +89,8 @@ final List<Product> productsData = [
     price: 130,
     unit: '200g pack',
     imagePath: '$_imageBase/ribbon_pakoda.jpg',
-    description: 'Crispy ribbon-shaped gram flour strips, lightly spiced and fried.',
+    description:
+        'Crispy ribbon-shaped gram flour strips, lightly spiced and fried.',
     shopOwnerId: defaultShopOwnerId,
   ),
 ];

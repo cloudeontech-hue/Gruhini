@@ -6,6 +6,7 @@ import '../state/cart_provider.dart';
 import '../state/products_provider.dart';
 import '../utils/formatters.dart';
 import '../widgets/product_image.dart';
+import 'checkout/delivery_address_screen.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   final Product product;
@@ -16,87 +17,166 @@ class ProductDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final quantity = cart.quantityOf(product.id);
-    // Subscribe so this screen refreshes immediately if an admin updates
-    // this product (e.g. its photo) while it's open.
     context.watch<ProductsProvider>();
 
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 220,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(product.name),
-              background: ProductImage(product: product),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+      bottomNavigationBar: quantity > 0
+          ? SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  border: Border(
+                    top: BorderSide(color: colorScheme.outlineVariant),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Chip(label: Text(product.category.label)),
-                    Chip(label: Text(product.unit)),
-                    Chip(
-                      label: Text(product.inStock ? 'In Stock' : 'Out of Stock'),
-                      backgroundColor: product.inStock
-                          ? Theme.of(context).colorScheme.primaryContainer
-                          : Theme.of(context).colorScheme.errorContainer,
+                    Row(
+                      children: [
+                        Text(
+                          '${cart.itemCount} item${cart.itemCount == 1 ? '' : 's'} in cart',
+                          style: textTheme.bodyMedium,
+                        ),
+                        const Spacer(),
+                        Text(
+                          formatPrice(cart.total),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DeliveryAddressScreen(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.shopping_cart_checkout),
+                      label: const Text('Proceed to Checkout'),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  formatPrice(product.price),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+              ),
+            )
+          : null,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 280,
+            pinned: true,
+            title: Text(product.name),
+            flexibleSpace: FlexibleSpaceBar(
+              background: ProductImage(product: product),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Name
+                  Text(
+                    product.name,
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Price / unit
+                  Text(
+                    '${formatPrice(product.price)} / ${product.unit}',
+                    style: textTheme.titleLarge?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // Description
+                  if (product.description.isNotEmpty)
+                    Text(
+                      product.description,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  product.description,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 24),
-                if (!product.inStock)
-                  const Text('This item is currently out of stock.')
-                else if (quantity == 0)
-                  FilledButton.icon(
-                    onPressed: () => cart.add(product),
-                    icon: const Icon(Icons.shopping_cart_outlined),
-                    label: const Text('Add to Cart'),
-                  )
-                else
-                  Row(
+                    ),
+                  const SizedBox(height: 16),
+                  // Tags
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      IconButton.filled(
-                        icon: const Icon(Icons.remove),
-                        onPressed: () => cart.decrement(product.id),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          '$quantity',
-                          style: Theme.of(context).textTheme.titleLarge,
+                      Chip(label: Text(product.category.label)),
+                      Chip(label: Text(product.unit)),
+                      Chip(
+                        label: Text(
+                          product.inStock ? 'In Stock' : 'Out of Stock',
                         ),
-                      ),
-                      IconButton.filled(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => cart.add(product),
-                      ),
-                      const Spacer(),
-                      Text(
-                        'In cart',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        backgroundColor: product.inStock
+                            ? colorScheme.primaryContainer
+                            : colorScheme.errorContainer,
+                        labelStyle: TextStyle(
+                          color: product.inStock
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onErrorContainer,
+                        ),
                       ),
                     ],
                   ),
-              ]),
+                  const SizedBox(height: 24),
+                  // Cart controls
+                  if (!product.inStock)
+                    Text(
+                      'This item is currently out of stock.',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.error,
+                      ),
+                    )
+                  else if (quantity == 0)
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => cart.add(product),
+                        icon: const Icon(Icons.shopping_cart_outlined),
+                        label: const Text('Add to Cart'),
+                      ),
+                    )
+                  else
+                    Row(
+                      children: [
+                        IconButton.filled(
+                          icon: const Icon(Icons.remove),
+                          onPressed: () => cart.decrement(product.id),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text('$quantity', style: textTheme.titleLarge),
+                        ),
+                        IconButton.filled(
+                          icon: const Icon(Icons.add),
+                          onPressed: () => cart.add(product),
+                        ),
+                        const Spacer(),
+                        Text(
+                          formatPrice(product.price * quantity),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ],

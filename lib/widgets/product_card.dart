@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../models/product.dart';
@@ -20,11 +21,11 @@ class ProductCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ProductDetailsScreen(product: product)),
+          MaterialPageRoute(
+            builder: (_) => ProductDetailsScreen(product: product),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -35,7 +36,9 @@ class ProductCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
                     child: ProductImage(product: product),
                   ),
                   if (!product.inStock)
@@ -43,9 +46,9 @@ class ProductCard extends StatelessWidget {
                       child: Container(
                         color: Colors.black.withValues(alpha: 0.45),
                         alignment: Alignment.center,
-                        child: const Text(
+                        child: Text(
                           'OUT OF STOCK',
-                          style: TextStyle(
+                          style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
@@ -70,16 +73,16 @@ class ProductCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       product.unit,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     Row(
                       children: [
@@ -87,7 +90,8 @@ class ProductCard extends StatelessWidget {
                           child: Text(
                             formatPrice(product.price),
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
                                   color: Theme.of(context).colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -96,7 +100,10 @@ class ProductCard extends StatelessWidget {
                         if (quantity == 0)
                           _AddButton(product: product, enabled: product.inStock)
                         else
-                          _QuantityStepper(product: product, quantity: quantity),
+                          _QuantityStepper(
+                            product: product,
+                            quantity: quantity,
+                          ),
                       ],
                     ),
                   ],
@@ -119,13 +126,15 @@ class _AddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 26,
-      width: 26,
+      height: 32,
+      width: 32,
       child: IconButton.filled(
         padding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
-        icon: const Icon(Icons.add, size: 15),
-        onPressed: enabled ? () => context.read<CartProvider>().add(product) : null,
+        icon: const Icon(Icons.add, size: 16),
+        onPressed: enabled
+            ? () => context.read<CartProvider>().add(product)
+            : null,
       ),
     );
   }

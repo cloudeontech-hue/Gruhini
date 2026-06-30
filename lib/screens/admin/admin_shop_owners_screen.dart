@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/shop_owners_provider.dart';
+import '../../utils/app_colors.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/responsive_center.dart';
 
 class AdminShopOwnersScreen extends StatelessWidget {
   const AdminShopOwnersScreen({super.key});
@@ -24,28 +27,38 @@ class AdminShopOwnersScreen extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
       body: shopOwners.isEmpty
-          ? const Center(child: Text('No shop owners yet.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: shopOwners.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final shopOwner = shopOwners[index];
-                return Card(
-                  child: ListTile(
-                    leading: const CircleAvatar(child: Icon(Icons.storefront_outlined)),
-                    title: Text(shopOwner.shopName),
-                    subtitle: Text('Username: ${shopOwner.username}'),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: 'Remove',
-                      onPressed: () => context.read<ShopOwnersProvider>().deleteShopOwner(
-                            shopOwner.id,
-                          ),
+          ? const EmptyState(
+              icon: Icons.storefront_outlined,
+              title: 'No shop owners yet',
+              subtitle: 'Tap the + button to add your first shop owner.',
+            )
+          : ResponsiveCenter(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: shopOwners.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final shopOwner = shopOwners[index];
+                  return Card(
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: AppColors.goldLight,
+                        foregroundColor: AppColors.brand,
+                        child: Icon(Icons.storefront_outlined),
+                      ),
+                      title: Text(shopOwner.shopName),
+                      subtitle: Text('Username: ${shopOwner.username}'),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Remove',
+                        onPressed: () => context
+                            .read<ShopOwnersProvider>()
+                            .deleteShopOwner(shopOwner.id),
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
     );
   }
@@ -79,10 +92,10 @@ class _AddShopOwnerDialogState extends State<_AddShopOwnerDialog> {
     setState(() => _isSubmitting = true);
     try {
       await context.read<ShopOwnersProvider>().addShopOwner(
-            shopName: _shopNameController.text.trim(),
-            username: _usernameController.text.trim(),
-            password: _passwordController.text,
-          );
+        shopName: _shopNameController.text.trim(),
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+      );
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) {
@@ -106,13 +119,15 @@ class _AddShopOwnerDialogState extends State<_AddShopOwnerDialog> {
             TextFormField(
               controller: _shopNameController,
               decoration: const InputDecoration(labelText: 'Shop Name'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Required' : null,
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _usernameController,
               decoration: const InputDecoration(labelText: 'Username'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Required' : null,
             ),
             const SizedBox(height: 8),
             TextFormField(

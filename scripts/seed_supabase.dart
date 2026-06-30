@@ -26,7 +26,10 @@ Map<String, String> _loadEnv(String path) {
 
 Future<void> main() async {
   final env = _loadEnv('.env');
-  final client = SupabaseClient(env['SUPABASE_URL']!, env['SUPABASE_ANON_KEY']!);
+  final client = SupabaseClient(
+    env['SUPABASE_URL']!,
+    env['SUPABASE_ANON_KEY']!,
+  );
 
   print('Seeding default shop owner (login: gruhini / shop123)...');
   await client.from('shop_owners').upsert({
@@ -41,12 +44,16 @@ Future<void> main() async {
     final imageFile = File(product.imagePath);
     final bytes = await imageFile.readAsBytes();
     final storagePath = '${product.id}.jpg';
-    await client.storage.from('product-images').uploadBinary(
+    await client.storage
+        .from('product-images')
+        .uploadBinary(
           storagePath,
           bytes,
           fileOptions: const FileOptions(upsert: true),
         );
-    final imageUrl = client.storage.from('product-images').getPublicUrl(storagePath);
+    final imageUrl = client.storage
+        .from('product-images')
+        .getPublicUrl(storagePath);
 
     await client.from('products').upsert({
       ...product.toMap(),
