@@ -164,15 +164,13 @@ class UpiPaymentScreen extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: ResponsiveCenter(
-            child: FilledButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const PaymentConfirmationScreen(),
-                ),
+          child: FilledButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const PaymentConfirmationScreen(),
               ),
-              child: const Text('I Have Paid'),
             ),
+            child: const Text('I Have Paid'),
           ),
         ),
       ),

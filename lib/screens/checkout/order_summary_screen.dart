@@ -134,13 +134,11 @@ class OrderSummaryScreen extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: ResponsiveCenter(
-            child: FilledButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PaymentMethodScreen()),
-              ),
-              child: const Text('Continue to Payment'),
+          child: FilledButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PaymentMethodScreen()),
             ),
+            child: const Text('Continue to Payment'),
           ),
         ),
       ),

@@ -184,17 +184,15 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: ResponsiveCenter(
-            child: FilledButton(
-              onPressed: _isSubmitting ? null : _submit,
-              child: _isSubmitting
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Submit Order'),
-            ),
+          child: FilledButton(
+            onPressed: _isSubmitting ? null : _submit,
+            child: _isSubmitting
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Submit Order'),
           ),
         ),
       ),

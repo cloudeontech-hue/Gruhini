@@ -65,13 +65,11 @@ class PaymentMethodScreen extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: ResponsiveCenter(
-            child: FilledButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const UpiPaymentScreen()),
-              ),
-              child: const Text('Continue to Pay'),
+          child: FilledButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const UpiPaymentScreen()),
             ),
+            child: const Text('Continue to Pay'),
           ),
         ),
       ),
