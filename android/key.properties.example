@@ -1,0 +1,16 @@
+## Copy this file to android/key.properties (same folder) and fill in your
+## real release keystore details. android/key.properties is git-ignored and
+## must never be committed - it contains secrets.
+##
+## Generate a keystore first if you don't have one:
+##   keytool -genkey -v -keystore ~/upload-keystore.jks \
+##     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+##
+## Store the keystore file itself somewhere safe and backed up outside the
+## repo (losing it means you can no longer publish updates to the same Play
+## Store listing).
+
+storePassword=your-keystore-password
+keyPassword=your-key-password
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

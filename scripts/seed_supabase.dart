@@ -2,11 +2,16 @@
 // Storage and inserts the existing seed products/customers/orders into the
 // tables created by scripts/supabase_schema.sql.
 //
+// Run AFTER scripts/supabase_schema_security.sql has been applied, so the
+// create_shop_owner() RPC (which bcrypt-hashes the password server-side) is
+// available.
+//
 // Run once with: dart run scripts/seed_supabase.dart
-import 'dart:convert';
+//
+// ignore_for_file: avoid_print - this is a console-run CLI script; print()
+// is the intended progress output, not leftover debug logging.
 import 'dart:io';
 
-import 'package:crypto/crypto.dart';
 import 'package:gruiny_foods/data/customers_data.dart';
 import 'package:gruiny_foods/data/orders_data.dart';
 import 'package:gruiny_foods/data/products_data.dart';
@@ -32,12 +37,20 @@ Future<void> main() async {
   );
 
   print('Seeding default shop owner (login: gruhini / shop123)...');
-  await client.from('shop_owners').upsert({
-    'id': defaultShopOwnerId,
-    'username': 'gruhini',
-    'password_hash': sha256.convert(utf8.encode('shop123')).toString(),
-    'shop_name': 'Gruhini Foods',
-  });
+  // create_shop_owner() hashes the password with bcrypt server-side.
+  // If the shop owner already exists this will throw a unique-constraint error
+  // which is safe to ignore (upsert semantics not available on RPCs — the
+  // supabase_schema_security.sql migration already re-hashes the gruhini row).
+  try {
+    await client.rpc('create_shop_owner', params: {
+      'p_id': defaultShopOwnerId,
+      'p_username': 'gruhini',
+      'p_password': 'shop123',
+      'p_shop_name': 'Gruhini Foods',
+    });
+  } catch (_) {
+    // Row already exists — skip.
+  }
 
   print('Uploading product images and seeding products...');
   for (final product in productsData) {

@@ -10,7 +10,12 @@ import '../../widgets/responsive_center.dart';
 import 'order_placed_screen.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
-  const PaymentConfirmationScreen({super.key});
+  /// Transaction/UTR ID reported back by the customer's UPI app after the
+  /// direct-pay flow (see PaymentMethodScreen._payWithAnyUpiApp). Null when
+  /// the customer arrived via the QR flow, or the UPI app didn't return one.
+  final String? initialTransactionId;
+
+  const PaymentConfirmationScreen({super.key, this.initialTransactionId});
 
   @override
   State<PaymentConfirmationScreen> createState() =>
@@ -18,15 +23,15 @@ class PaymentConfirmationScreen extends StatefulWidget {
 }
 
 class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
-  final _transactionIdController = TextEditingController();
-  final _notesController = TextEditingController();
+  late final _transactionIdController = TextEditingController(
+    text: widget.initialTransactionId ?? '',
+  );
   Uint8List? _screenshotBytes;
   bool _isSubmitting = false;
 
   @override
   void dispose() {
     _transactionIdController.dispose();
-    _notesController.dispose();
     super.dispose();
   }
 
@@ -113,6 +118,29 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                 ),
               ),
             ),
+            if (widget.initialTransactionId != null) ...[
+              const SizedBox(height: 12),
+              Card(
+                color: Theme.of(
+                  context,
+                ).colorScheme.secondaryContainer.withValues(alpha: 0.4),
+                child: const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Transaction ID auto-filled from your UPI app. '
+                          'Please verify it below before submitting.',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             Text(
               'Upload Payment Screenshot (Recommended)',
@@ -167,15 +195,6 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
               decoration: const InputDecoration(
                 labelText: 'Transaction ID (Optional)',
               ),
-            ),
-            const SizedBox(height: 12),
-            // Not wired to placeOrder/Supabase - there's no orders.notes
-            // column in the schema (see scripts/supabase_schema_payments.sql),
-            // only payment_screenshot_url/transaction_id are persisted.
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(labelText: 'Notes (Optional)'),
-              maxLines: 3,
             ),
           ],
         ),

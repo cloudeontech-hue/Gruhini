@@ -201,25 +201,24 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
   Future<void> _verifyPhone() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    try {
-      // Dry-run: resetCustomerPassword checks the phone; we pass a dummy
-      // password just to verify the phone exists — we catch the error below.
-      await widget.auth.resetCustomerPassword(
-        phone: _phoneController.text.trim(),
-        newPassword: widget.auth.customerPassword,
-      );
-      // Phone matched — move to the new-password step.
+    final matched = await widget.auth.isRegisteredPhone(
+      _phoneController.text.trim(),
+    );
+    if (!mounted) return;
+    if (matched) {
       setState(() {
         _phoneVerified = true;
         _isLoading = false;
       });
-    } on AuthException catch (e) {
+    } else {
       setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No account found with this phone number on this device.',
+          ),
+        ),
+      );
     }
   }
 

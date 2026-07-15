@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/order.dart';
-import '../../state/auth_provider.dart';
 import '../../state/customers_provider.dart';
 import '../../state/orders_provider.dart';
 import '../../state/products_provider.dart';
@@ -10,24 +9,16 @@ import '../../utils/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/responsive_center.dart';
 
+/// Only ever shown to the head admin - shop owners get the separate,
+/// mobile-tailored ShopOwnerDashboardScreen instead.
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final isHeadAdmin = auth.role == AppRole.headAdmin;
-
-    final allProducts = context.watch<ProductsProvider>().products;
-    final allOrders = context.watch<OrdersProvider>().orders;
+    final products = context.watch<ProductsProvider>().products;
+    final orders = context.watch<OrdersProvider>().orders;
     final customersCount = context.watch<CustomersProvider>().customers.length;
-
-    final products = isHeadAdmin
-        ? allProducts
-        : allProducts.where((p) => p.shopOwnerId == auth.shopOwnerId).toList();
-    final orders = isHeadAdmin
-        ? allOrders
-        : allOrders.where((o) => o.shopOwnerId == auth.shopOwnerId).toList();
     final revenue = orders.fold(0.0, (sum, o) => sum + o.total);
 
     return ResponsiveCenter(
@@ -52,12 +43,11 @@ class AdminDashboardScreen extends StatelessWidget {
                 label: 'Orders',
                 value: '${orders.length}',
               ),
-              if (isHeadAdmin)
-                _StatCard(
-                  icon: Icons.people_outline,
-                  label: 'Customers',
-                  value: '$customersCount',
-                ),
+              _StatCard(
+                icon: Icons.people_outline,
+                label: 'Customers',
+                value: '$customersCount',
+              ),
               _StatCard(
                 icon: Icons.currency_rupee,
                 label: 'Revenue',

@@ -42,5 +42,14 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Package-visibility declaration for Android 11+: lets Razorpay
+             Checkout's own UPI-app payment option (PhonePe, GPay, Paytm,
+             etc.) detect which UPI apps are installed. Not required by any
+             app code directly - kept in case Razorpay's SDK doesn't merge
+             its own equivalent <queries> entry. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="upi"/>
+        </intent>
     </queries>
 </manifest>

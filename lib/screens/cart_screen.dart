@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'checkout/delivery_address_screen.dart';
 import '../state/cart_provider.dart';
 import '../state/products_provider.dart';
-import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/product_image.dart';
@@ -32,29 +31,6 @@ class CartScreen extends StatelessWidget {
             )
           : Column(
               children: [
-                Container(
-                  width: double.infinity,
-                  color: AppColors.goldLight,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.local_shipping_outlined,
-                        size: 16,
-                        color: AppColors.brand,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Free delivery on orders above ₹500',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.brand,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 Expanded(
                   child: ResponsiveCenter(
                     child: ListView.separated(

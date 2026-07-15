@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 
 import '../models/shop_owner.dart';
 import '../services/supabase_client.dart';
-import '../utils/password_hash.dart';
 
 class ShopOwnersProvider extends ChangeNotifier {
   final List<ShopOwner> _shopOwners = [];
@@ -35,6 +34,9 @@ class ShopOwnersProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Creates a new shop owner via the `create_shop_owner` security-definer
+  /// RPC, which hashes the password with bcrypt server-side. The plain-text
+  /// password is sent to the RPC over TLS; it is never hashed client-side.
   Future<void> addShopOwner({
     required String username,
     required String password,
@@ -42,11 +44,11 @@ class ShopOwnersProvider extends ChangeNotifier {
   }) async {
     final id =
         's${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-    await supabase.from('shop_owners').insert({
-      'id': id,
-      'username': username,
-      'password_hash': hashPassword(password),
-      'shop_name': shopName,
+    await supabase.rpc('create_shop_owner', params: {
+      'p_id': id,
+      'p_username': username,
+      'p_password': password,
+      'p_shop_name': shopName,
     });
     await load();
   }
@@ -58,9 +60,8 @@ class ShopOwnersProvider extends ChangeNotifier {
   }
 
   /// Verifies [currentPassword] and updates to [newPassword] via the
-  /// `change_shop_owner_password` RPC (see
-  /// scripts/supabase_schema_shop_owners.sql), which does the comparison
-  /// inside the database so the app never reads password_hash directly.
+  /// `change_shop_owner_password` RPC (see scripts/supabase_schema_security.sql),
+  /// which does bcrypt verification and re-hashing server-side.
   /// Returns false if [currentPassword] didn't match.
   Future<bool> changePassword({
     required String id,
@@ -71,11 +72,23 @@ class ShopOwnersProvider extends ChangeNotifier {
       'change_shop_owner_password',
       params: {
         'p_id': id,
-        'p_current_password_hash': hashPassword(currentPassword),
-        'p_new_password_hash': hashPassword(newPassword),
+        'p_current_password': currentPassword,
+        'p_new_password': newPassword,
       },
     );
     return result == true;
+  }
+
+  /// Resets a shop owner's password without requiring the current password.
+  /// Admin-only action — calls the `reset_shop_owner_password` RPC.
+  Future<void> resetShopOwnerPassword({
+    required String id,
+    required String newPassword,
+  }) async {
+    await supabase.rpc('reset_shop_owner_password', params: {
+      'p_id': id,
+      'p_new_password': newPassword,
+    });
   }
 }
 

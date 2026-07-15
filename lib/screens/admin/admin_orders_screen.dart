@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/order.dart';
-import '../../state/auth_provider.dart';
 import '../../state/orders_provider.dart';
 import '../../state/shop_owners_provider.dart';
 import '../../utils/app_colors.dart';
@@ -11,6 +10,8 @@ import '../../widgets/empty_state.dart';
 import '../../widgets/responsive_center.dart';
 import '../order_details_screen.dart';
 
+/// Only ever shown to the head admin - shop owners see their own orders via
+/// the separate ShopOwnerOrdersScreen instead.
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
 
@@ -25,20 +26,13 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   Widget build(BuildContext context) {
     final ordersProvider = context.watch<OrdersProvider>();
     final shopOwnersProvider = context.watch<ShopOwnersProvider>();
-    final auth = context.watch<AuthProvider>();
     if (!ordersProvider.isLoaded || !shopOwnersProvider.isLoaded) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final isHeadAdmin = auth.role == AppRole.headAdmin;
-    final orders =
-        (isHeadAdmin
-                ? ordersProvider.orders
-                : ordersProvider.orders
-                      .where((o) => o.shopOwnerId == auth.shopOwnerId)
-                      .toList())
-            .where((o) => _filter == null || o.status == _filter)
-            .toList();
+    final orders = ordersProvider.orders
+        .where((o) => _filter == null || o.status == _filter)
+        .toList();
 
     return Column(
       children: [
@@ -88,32 +82,36 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             '${order.customerName} · #${order.shortId}',
                           ),
                           subtitle: Text(
-                            isHeadAdmin
-                                ? '${shopOwnersProvider.shopNameFor(order.shopOwnerId)} · ${order.customerPhone}'
-                                : order.customerPhone,
+                            '${shopOwnersProvider.shopNameFor(order.shopOwnerId)} · ${order.customerPhone}',
                           ),
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                formatPrice(order.total),
-                                style: Theme.of(context).textTheme.titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              Chip(
-                                label: Text(order.status.label),
-                                backgroundColor: AppColors.statusColor(
-                                  order.status,
-                                ).withValues(alpha: 0.15),
-                                labelStyle: TextStyle(
-                                  color: AppColors.statusColor(order.status),
+                          // FittedBox guards against the price+chip column
+                          // overflowing the tile's default trailing height -
+                          // it scales down rather than clipping/overflowing.
+                          trailing: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  formatPrice(order.total),
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                side: BorderSide.none,
-                                visualDensity: VisualDensity.compact,
-                                padding: EdgeInsets.zero,
-                              ),
-                            ],
+                                Chip(
+                                  label: Text(order.status.label),
+                                  backgroundColor: AppColors.statusColor(
+                                    order.status,
+                                  ).withValues(alpha: 0.15),
+                                  labelStyle: TextStyle(
+                                    color: AppColors.statusColor(order.status),
+                                  ),
+                                  side: BorderSide.none,
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );

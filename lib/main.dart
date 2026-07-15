@@ -479,7 +479,10 @@ class _AdminRootScreenState extends State<AdminRootScreen> {
 
   int _selectedIndex = 0;
 
-  static const _headAdminTitles = [
+  // AdminRootScreen is only ever built for AppRole.headAdmin (see AuthGate
+  // below) - shop owners get the separate, mobile-tailored
+  // ShopOwnerRootScreen instead.
+  static const _titles = [
     'Dashboard',
     'Products',
     'Orders',
@@ -487,25 +490,12 @@ class _AdminRootScreenState extends State<AdminRootScreen> {
     'Shop Owners',
     'Settings',
   ];
-  static const _headAdminScreens = [
+  static const _screens = [
     AdminDashboardScreen(),
     AdminProductsScreen(),
     AdminOrdersScreen(),
     AdminCustomersScreen(),
     AdminShopOwnersScreen(),
-    AdminSettingsScreen(),
-  ];
-
-  static const _shopOwnerTitles = [
-    'Dashboard',
-    'Products',
-    'Orders',
-    'Settings',
-  ];
-  static const _shopOwnerScreens = [
-    AdminDashboardScreen(),
-    AdminProductsScreen(),
-    AdminOrdersScreen(),
     AdminSettingsScreen(),
   ];
 
@@ -545,10 +535,7 @@ class _AdminRootScreenState extends State<AdminRootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isHeadAdmin = context.watch<AuthProvider>().role == AppRole.headAdmin;
-    final titles = isHeadAdmin ? _headAdminTitles : _shopOwnerTitles;
-    final screens = isHeadAdmin ? _headAdminScreens : _shopOwnerScreens;
-    final selectedIndex = _selectedIndex.clamp(0, titles.length - 1);
+    final selectedIndex = _selectedIndex.clamp(0, _titles.length - 1);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -556,13 +543,13 @@ class _AdminRootScreenState extends State<AdminRootScreen> {
 
         if (isWide) {
           return Scaffold(
-            appBar: AppBar(title: Text(titles[selectedIndex])),
+            appBar: AppBar(title: Text(_titles[selectedIndex])),
             body: Row(
               children: [
                 SizedBox(
                   width: 240,
                   child: AdminSidebar(
-                    titles: titles,
+                    titles: _titles,
                     selectedIndex: selectedIndex,
                     onItemSelected: (index) =>
                         setState(() => _selectedIndex = index),
@@ -570,17 +557,17 @@ class _AdminRootScreenState extends State<AdminRootScreen> {
                   ),
                 ),
                 const VerticalDivider(width: 1),
-                Expanded(child: screens[selectedIndex]),
+                Expanded(child: _screens[selectedIndex]),
               ],
             ),
           );
         }
 
         return Scaffold(
-          appBar: AppBar(title: Text(titles[selectedIndex])),
+          appBar: AppBar(title: Text(_titles[selectedIndex])),
           drawer: Drawer(
             child: AdminSidebar(
-              titles: titles,
+              titles: _titles,
               selectedIndex: selectedIndex,
               onItemSelected: (index) {
                 setState(() => _selectedIndex = index);
@@ -592,7 +579,7 @@ class _AdminRootScreenState extends State<AdminRootScreen> {
               },
             ),
           ),
-          body: screens[selectedIndex],
+          body: _screens[selectedIndex],
         );
       },
     );

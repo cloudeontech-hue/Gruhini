@@ -98,24 +98,30 @@ class ShopOwnerDashboardScreen extends StatelessWidget {
                       subtitle: Text(
                         '${order.placedAt.day}/${order.placedAt.month}/${order.placedAt.year}',
                       ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(formatPrice(order.total)),
-                          Chip(
-                            label: Text(order.status.label),
-                            backgroundColor: AppColors.statusColor(
-                              order.status,
-                            ).withValues(alpha: 0.15),
-                            labelStyle: TextStyle(
-                              color: AppColors.statusColor(order.status),
+                      // FittedBox guards against the price+chip column
+                      // overflowing the tile's default trailing height - it
+                      // scales down rather than clipping/overflowing.
+                      trailing: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(formatPrice(order.total)),
+                            Chip(
+                              label: Text(order.status.label),
+                              backgroundColor: AppColors.statusColor(
+                                order.status,
+                              ).withValues(alpha: 0.15),
+                              labelStyle: TextStyle(
+                                color: AppColors.statusColor(order.status),
+                              ),
+                              side: BorderSide.none,
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
                             ),
-                            side: BorderSide.none,
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

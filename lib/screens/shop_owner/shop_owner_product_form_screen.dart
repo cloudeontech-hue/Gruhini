@@ -7,9 +7,9 @@ import '../../state/auth_provider.dart';
 import '../../state/products_provider.dart';
 import '../../widgets/product_image_picker.dart';
 
-/// Full-screen Add/Edit product form for the shop owner mobile flow.
-/// Mirrors the logic of `_ProductFormDialog` in admin_products_screen.dart,
-/// but as a pushed page rather than a dialog.
+/// Full-screen Add/Edit product form for the shop owner mobile flow - the
+/// only place products can be added or edited (the head admin's
+/// AdminProductsScreen is view/toggle-stock/delete only).
 class ShopOwnerProductFormScreen extends StatefulWidget {
   final Product? product;
 

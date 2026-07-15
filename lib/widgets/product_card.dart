@@ -125,16 +125,26 @@ class _AddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 32,
-      width: 32,
-      child: IconButton.filled(
-        padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-        icon: const Icon(Icons.add, size: 16),
-        onPressed: enabled
-            ? () => context.read<CartProvider>().add(product)
-            : null,
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: enabled ? () => context.read<CartProvider>().add(product) : null,
+      child: Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: enabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '+',
+          style: TextStyle(
+            color: enabled ? colorScheme.onPrimary : colorScheme.onSurface.withValues(alpha: 0.38),
+            fontSize: 20,
+            height: 1,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
       ),
     );
   }
@@ -149,23 +159,45 @@ class _QuantityStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.read<CartProvider>();
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          padding: EdgeInsets.zero,
-          icon: const Icon(Icons.remove_circle_outline, size: 17),
-          onPressed: () => cart.decrement(product.id),
-        ),
-        Text('$quantity', style: Theme.of(context).textTheme.bodySmall),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          padding: EdgeInsets.zero,
-          icon: const Icon(Icons.add_circle_outline, size: 17),
-          onPressed: () => cart.add(product),
-        ),
-      ],
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 28,
+            height: 32,
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              icon: Icon(Icons.remove, size: 14, color: colorScheme.onPrimary),
+              onPressed: () => cart.decrement(product.id),
+            ),
+          ),
+          Text(
+            '$quantity',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(
+            width: 28,
+            height: 32,
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              icon: Icon(Icons.add, size: 14, color: colorScheme.onPrimary),
+              onPressed: () => cart.add(product),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

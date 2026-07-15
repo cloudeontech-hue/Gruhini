@@ -153,17 +153,19 @@ class ProductDetailsScreen extends StatelessWidget {
                   else
                     Row(
                       children: [
-                        IconButton.filled(
-                          icon: const Icon(Icons.remove),
-                          onPressed: () => cart.decrement(product.id),
+                        _StepBtn(
+                          label: '−',
+                          onTap: () => cart.decrement(product.id),
+                          colorScheme: colorScheme,
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Text('$quantity', style: textTheme.titleLarge),
                         ),
-                        IconButton.filled(
-                          icon: const Icon(Icons.add),
-                          onPressed: () => cart.add(product),
+                        _StepBtn(
+                          label: '+',
+                          onTap: () => cart.add(product),
+                          colorScheme: colorScheme,
                         ),
                         const Spacer(),
                         Text(
@@ -180,6 +182,43 @@ class ProductDetailsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StepBtn extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final ColorScheme colorScheme;
+
+  const _StepBtn({
+    required this.label,
+    required this.onTap,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: colorScheme.primary,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: colorScheme.onPrimary,
+            fontSize: 22,
+            height: 1,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
       ),
     );
   }

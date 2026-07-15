@@ -46,3 +46,12 @@ app.*.map.json
 
 # Environment variables
 .env
+
+# Release signing secrets - see android/key.properties.example
+/android/key.properties
+*.jks
+*.keystore
+
+# Supabase CLI local state (project ref, pooler URL, version pins) - not
+# secrets, but local machine/CLI cache, not project source.
+/supabase/.temp/

@@ -78,7 +78,9 @@ class Order {
   final String shopOwnerId;
   OrderStatus status;
 
-  /// Always 'upi' for now - this app is prepaid-only, no Cash on Delivery.
+  /// 'upi' for the manual QR flow (web/desktop), 'razorpay' for the
+  /// cryptographically-verified mobile flow - this app is prepaid-only, no
+  /// Cash on Delivery either way.
   final String paymentMethod;
   PaymentStatus paymentStatus;
   String? paymentScreenshotUrl;
@@ -86,6 +88,11 @@ class Order {
   bool paymentVerified;
   DateTime? verifiedAt;
   String? verifiedBy;
+
+  /// Razorpay's order id (distinct from [transactionId], which holds the
+  /// Razorpay *payment* id for this payment method) - null for the manual
+  /// UPI flow. See scripts/supabase_schema_razorpay.sql.
+  String? razorpayOrderId;
 
   Order({
     required this.id,
@@ -104,6 +111,7 @@ class Order {
     this.paymentVerified = false,
     this.verifiedAt,
     this.verifiedBy,
+    this.razorpayOrderId,
   });
 
   /// A short, display-friendly order number derived from [id].
@@ -140,6 +148,7 @@ class Order {
         ? DateTime.parse(map['verified_at'] as String)
         : null,
     verifiedBy: map['verified_by'] as String?,
+    razorpayOrderId: map['razorpay_order_id'] as String?,
   );
 
   Map<String, dynamic> toMap() => {
@@ -159,5 +168,6 @@ class Order {
     'payment_verified': paymentVerified,
     'verified_at': verifiedAt?.toIso8601String(),
     'verified_by': verifiedBy,
+    'razorpay_order_id': razorpayOrderId,
   };
 }

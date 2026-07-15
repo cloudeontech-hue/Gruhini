@@ -18,6 +18,9 @@ Future<Uint8List?> pickProductImageBytes() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: supportedImageExtensions,
+      // Bytes aren't loaded by default on non-web platforms (only `path`
+      // is) - withData forces them into memory so callers always get a
+      // Uint8List regardless of platform.
       withData: true,
     );
     return result?.files.single.bytes;

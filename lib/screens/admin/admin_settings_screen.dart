@@ -3,12 +3,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../state/auth_provider.dart';
 import '../../state/business_settings_provider.dart';
 import '../../state/theme_provider.dart';
 import '../../utils/image_picker_helper.dart';
 import '../../widgets/responsive_center.dart';
 
+/// Only ever shown to the head admin - shop owners manage their own profile
+/// via the separate ShopOwnerProfileScreen instead, so the UPI/business info
+/// sections here are unconditional.
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({super.key});
 
@@ -51,33 +53,27 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final business = context.watch<BusinessSettingsProvider>();
-    final isHeadAdmin = context.watch<AuthProvider>().role == AppRole.headAdmin;
 
     return ResponsiveCenter(
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          if (isHeadAdmin) ...[
-            Text(
-              'UPI & Payment',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            _UpiSettingsCard(
-              business: business,
-              isUploadingQr: _isUploadingQr,
-              onChangeQr: () => _changeQr(business),
-              onRemoveQr: () => business.removeQr(),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Business Info',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            _BusinessInfoCard(business: business),
-            const SizedBox(height: 24),
-          ],
+          Text('UPI & Payment', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          _UpiSettingsCard(
+            business: business,
+            isUploadingQr: _isUploadingQr,
+            onChangeQr: () => _changeQr(business),
+            onRemoveQr: () => business.removeQr(),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Business Info',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          _BusinessInfoCard(business: business),
+          const SizedBox(height: 24),
           Card(
             child: SwitchListTile(
               secondary: Icon(

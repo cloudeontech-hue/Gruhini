@@ -109,6 +109,28 @@ class ProductsProvider extends ChangeNotifier {
     _products.removeWhere((p) => p.id == id);
     notifyListeners();
   }
+
+  /// Test-only: populates the catalog directly, bypassing Supabase, since
+  /// widget tests have no live backend to load from. Seeds independent
+  /// copies (like [Product.fromMap] would from a real Supabase row) so
+  /// in-place edits made via this provider never leak into the caller's
+  /// source list.
+  @visibleForTesting
+  void seedForTest(List<Product> products) {
+    _products
+      ..clear()
+      ..addAll(products.map((p) => p.copy()));
+    _isLoaded = true;
+    notifyListeners();
+  }
+
+  /// Test-only: notifies listeners without a Supabase round-trip. Real edits
+  /// (addProduct/updateProduct/etc.) only notify after their write succeeds,
+  /// which never happens against the backend-less test environment - tests
+  /// that mutate a seeded [Product] directly (to verify in-place-mutation
+  /// propagation) need this to trigger the resulting rebuild.
+  @visibleForTesting
+  void notifyForTest() => notifyListeners();
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

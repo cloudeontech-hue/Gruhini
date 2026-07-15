@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../state/auth_provider.dart';
+import '../state/business_settings_provider.dart';
 import '../state/theme_provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/address_form_fields.dart';
@@ -53,6 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final themeProvider = context.watch<ThemeProvider>();
+    final supportPhone = context.watch<BusinessSettingsProvider>().supportPhone;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -161,7 +163,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () => _showInfoDialog(
                       context,
                       'Help & Support',
-                      'Need help with an order? Reach us at support@gruhinifoods.com or call +91 98765 43210.',
+                      supportPhone.isNotEmpty
+                          ? 'Need help with an order? Call us at $supportPhone.'
+                          : 'Support contact details are not configured yet.',
                     ),
                   ),
                   const Divider(height: 1),

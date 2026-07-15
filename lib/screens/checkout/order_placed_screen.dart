@@ -20,6 +20,13 @@ class OrderPlacedScreen extends StatelessWidget {
     final total = orders.fold(0.0, (sum, o) => sum + o.total);
     final placedAt = orders.first.placedAt;
     final orderIds = orders.map((o) => '#${o.shortId}').join(', ');
+    final paymentVerified = orders.first.paymentVerified;
+    final statusColor = paymentVerified
+        ? AppColors.statusActive
+        : AppColors.statusPending;
+    final statusLabel = paymentVerified
+        ? 'Verified'
+        : 'Payment Verification';
 
     return Scaffold(
       body: SafeArea(
@@ -50,8 +57,10 @@ class OrderPlacedScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Your order has been placed successfully. Payment is being verified.',
+                Text(
+                  paymentVerified
+                      ? 'Your order has been placed successfully. Payment is verified.'
+                      : 'Your order has been placed successfully. Payment is being verified.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -75,12 +84,11 @@ class OrderPlacedScreen extends StatelessWidget {
                           children: [
                             const Text('Payment Status'),
                             Chip(
-                              label: const Text('Payment Verification'),
-                              backgroundColor: AppColors.statusPending
-                                  .withValues(alpha: 0.15),
-                              labelStyle: TextStyle(
-                                color: AppColors.statusPending,
+                              label: Text(statusLabel),
+                              backgroundColor: statusColor.withValues(
+                                alpha: 0.15,
                               ),
+                              labelStyle: TextStyle(color: statusColor),
                               side: BorderSide.none,
                               visualDensity: VisualDensity.compact,
                             ),

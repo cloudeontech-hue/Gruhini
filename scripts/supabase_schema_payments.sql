@@ -45,11 +45,12 @@ drop policy if exists "anon can update business_settings" on business_settings;
 create policy "anon can read business_settings" on business_settings for select to anon using (true);
 create policy "anon can update business_settings" on business_settings for update to anon using (true) with check (true);
 
+-- Placeholder contact/UPI values only - replace via Admin > Settings (head
+-- admin) before accepting real payments. Never seed real business details
+-- (UPI VPA, support phone) directly in a migration script.
 insert into business_settings (id, business_name, support_phone, upi_id, upi_qr_url)
-values ('default', 'Gruhini Foods', '+91 98765 43210', 'kvishals-7@okaxis', '')
-on conflict (id) do update set
-  upi_id = excluded.upi_id,
-  support_phone = excluded.support_phone;
+values ('default', 'Gruhini Foods', '+91 00000 00000', 'replace-me@upi', '')
+on conflict (id) do nothing;
 
 -- Same public-bucket + insert/update-only anon policy pattern as
 -- product-images in scripts/supabase_schema.sql - no anon SELECT/listing

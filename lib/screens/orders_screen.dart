@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/order.dart';
+import '../state/auth_provider.dart';
 import '../state/orders_provider.dart';
 import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
@@ -21,8 +22,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
     final ordersProvider = context.watch<OrdersProvider>();
     final orders = ordersProvider.orders
+        .where((o) => o.customerPhone == auth.customerPhone)
         .where((o) => _filter == null || o.status == _filter)
         .toList();
 
@@ -136,11 +139,15 @@ class _OrderCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '${order.placedAt.day}/${order.placedAt.month}/${order.placedAt.year}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                  Flexible(
+                    child: Text(
+                      '${order.placedAt.day}/${order.placedAt.month}/${order.placedAt.year}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         formatPrice(order.total),
@@ -148,13 +155,10 @@ class _OrderCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'View Details',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+                      const SizedBox(width: 4),
+                      // The whole card is already tappable, so a plain
+                      // chevron (no "View Details" label) is enough of an
+                      // affordance without overflowing on narrow phones.
                       Icon(
                         Icons.chevron_right,
                         size: 16,
