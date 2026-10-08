@@ -6,6 +6,7 @@ import '../state/auth_provider.dart';
 import '../state/orders_provider.dart';
 import '../utils/formatters.dart';
 import '../widgets/responsive_center.dart';
+import 'invoice_screen.dart';
 
 /// Shared by both the head admin (web) and shop owner (mobile) order
 /// screens — payment verification and fulfillment are identical,
@@ -35,9 +36,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     try {
       await action();
     } catch (error) {
+      debugPrint('Could not update order: $error');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not update order: $error')),
+          const SnackBar(
+            content: Text('Could not update this order. Please try again.'),
+          ),
         );
       }
     } finally {
@@ -84,7 +88,18 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final order = widget.order;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Order #${order.shortId}')),
+      appBar: AppBar(
+        title: Text('Order #${order.shortId}'),
+        actions: [
+          IconButton(
+            tooltip: 'View Invoice',
+            icon: const Icon(Icons.receipt_long_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => InvoiceScreen(order: order)),
+            ),
+          ),
+        ],
+      ),
       body: ResponsiveCenter(
         child: ListView(
           padding: const EdgeInsets.all(16),

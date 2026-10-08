@@ -7,7 +7,7 @@ the [Supabase CLI](https://supabase.com/docs/guides/cli) and a
 ## 1. Run the SQL migration
 
 In the Supabase dashboard → **SQL Editor**, paste and run
-`scripts/supabase_schema_razorpay.sql`. It adds one column
+`supabase/migrations/20260710115900_razorpay_order_id.sql`. It adds one column
 (`orders.razorpay_order_id`) — additive only, safe to re-run.
 
 ## 2. Link the Supabase CLI to your project

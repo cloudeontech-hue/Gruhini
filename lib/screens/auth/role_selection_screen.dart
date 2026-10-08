@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../utils/app_colors.dart';
 import '../../widgets/responsive_center.dart';
-import '../admin/admin_login_screen.dart';
 import 'login_screen.dart';
-import 'shop_owner_login_screen.dart';
+import 'staff_login_screen.dart';
 
 /// First screen shown when no one is logged in (`AppRole.none`). Lets the
 /// user pick which kind of account they're signing into before showing the
@@ -36,8 +34,8 @@ class RoleSelectionScreen extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.all(4),
                       child: ClipOval(
-                        child: SvgPicture.asset(
-                          'assets/images/logo.svg',
+                        child: Image.asset(
+                          'assets/images/logo.png',
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -64,22 +62,16 @@ class RoleSelectionScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  // Shop Owner and Admin share one screen now - both sign
+                  // in with a username/password and StaffLoginScreen works
+                  // out which role the credentials belong to, so staff no
+                  // longer have to pick their own role first.
                   _RoleOption(
                     icon: Icons.storefront_outlined,
-                    label: 'I am a Shop Owner',
+                    label: 'Shop Owner / Admin',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const ShopOwnerLoginScreen(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _RoleOption(
-                    icon: Icons.shield_outlined,
-                    label: 'I am Admin',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const AdminLoginScreen(),
+                        builder: (_) => const StaffLoginScreen(),
                       ),
                     ),
                   ),

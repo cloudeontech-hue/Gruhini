@@ -1,0 +1,417 @@
+<title>Privacy Policy — Gruhini Foods</title>
+<style>
+  :root {
+    --bg: #FBF6ED;
+    --surface: #FFFFFF;
+    --border: #E7DCC9;
+    --text: #2A1B14;
+    --text-muted: #6E5C4E;
+    --maroon: #7B1826;
+    --maroon-deep: #591019;
+    --gold: #A9762E;
+    --gold-soft: #EFE0C4;
+    --link: #7B1826;
+    --focus: #A9762E;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1B1310;
+      --surface: #241a16;
+      --border: #3B2C24;
+      --text: #F2E7DA;
+      --text-muted: #C2AD9A;
+      --maroon: #E08A97;
+      --maroon-deep: #E08A97;
+      --gold: #D8AE6C;
+      --gold-soft: #34281c;
+      --link: #E08A97;
+      --focus: #D8AE6C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1B1310;
+    --surface: #241a16;
+    --border: #3B2C24;
+    --text: #F2E7DA;
+    --text-muted: #C2AD9A;
+    --maroon: #E08A97;
+    --maroon-deep: #E08A97;
+    --gold: #D8AE6C;
+    --gold-soft: #34281c;
+    --link: #E08A97;
+    --focus: #D8AE6C;
+  }
+  :root[data-theme="light"] {
+    --bg: #FBF6ED;
+    --surface: #FFFFFF;
+    --border: #E7DCC9;
+    --text: #2A1B14;
+    --text-muted: #6E5C4E;
+    --maroon: #7B1826;
+    --maroon-deep: #591019;
+    --gold: #A9762E;
+    --gold-soft: #EFE0C4;
+    --link: #7B1826;
+    --focus: #A9762E;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  header.hero {
+    padding: 64px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+
+  .mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    border: 1.5px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    color: var(--maroon);
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-weight: 600;
+    font-size: 22px;
+    background: var(--gold-soft);
+  }
+
+  h1 {
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 2.6rem);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin: 0 0 12px;
+    text-wrap: balance;
+    color: var(--text);
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin: 0 0 20px;
+    max-width: 55ch;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .meta strong { color: var(--text); font-weight: 600; }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 48px;
+  }
+
+  nav.toc h2 {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin: 0 0 12px;
+    font-weight: 700;
+  }
+
+  nav.toc ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 20px;
+  }
+
+  nav.toc a {
+    font-size: 0.9rem;
+    text-decoration: none;
+    color: var(--text);
+  }
+  nav.toc a:hover { color: var(--link); text-decoration: underline; }
+  nav.toc .num { color: var(--gold); font-variant-numeric: tabular-nums; margin-right: 6px; }
+
+  section {
+    margin-bottom: 44px;
+    scroll-margin-top: 24px;
+  }
+
+  h2 {
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 0 16px;
+    color: var(--text);
+    text-wrap: balance;
+  }
+
+  h2 .num {
+    color: var(--gold);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    margin: 24px 0 8px;
+    color: var(--text);
+  }
+
+  p { margin: 0 0 14px; max-width: 68ch; }
+  ul, ol.plain { margin: 0 0 14px; padding-left: 22px; max-width: 66ch; }
+  li { margin-bottom: 6px; }
+
+  .callout {
+    border-left: 3px solid var(--gold);
+    background: var(--gold-soft);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 0 0 16px;
+    font-size: 0.92rem;
+    color: var(--text);
+  }
+  .callout strong { color: var(--maroon-deep); }
+
+  .table-wrap { overflow-x: auto; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 480px; background: var(--surface); }
+  th, td { text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  thead th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    background: var(--gold-soft);
+    font-weight: 700;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .contact-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    display: grid;
+    gap: 12px;
+  }
+  .contact-row { display: flex; gap: 10px; align-items: baseline; font-size: 0.96rem; }
+  .contact-row .label { color: var(--text-muted); min-width: 70px; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  footer.closing {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  footer.closing p {
+    max-width: 46ch;
+    margin: 0 auto;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+  footer.closing .brand {
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    color: var(--maroon);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 560px) {
+    header.hero { padding-top: 40px; }
+    nav.toc ol { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <div class="mark" aria-hidden="true">GF</div>
+    <h1>Privacy Policy</h1>
+    <p class="subtitle">How Gruhini Foods collects, uses, and protects your information across the Customer, Shop Owner, and Admin experiences.</p>
+    <div class="meta">
+      <span><strong>Effective date:</strong> August 3, 2026</span>
+      <span><strong>Last updated:</strong> August 3, 2026</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#introduction"><span class="num">1.</span>Introduction</a></li>
+      <li><a href="#information-we-collect"><span class="num">2.</span>Information We Collect</a></li>
+      <li><a href="#how-we-use"><span class="num">3.</span>How We Use Your Information</a></li>
+      <li><a href="#location"><span class="num">4.</span>Location Data</a></li>
+      <li><a href="#payments"><span class="num">5.</span>Payments</a></li>
+      <li><a href="#sharing"><span class="num">6.</span>Who We Share Data With</a></li>
+      <li><a href="#security"><span class="num">7.</span>Data Storage &amp; Security</a></li>
+      <li><a href="#retention"><span class="num">8.</span>Data Retention</a></li>
+      <li><a href="#deletion"><span class="num">9.</span>Account Deletion</a></li>
+      <li><a href="#children"><span class="num">10.</span>Children's Privacy</a></li>
+      <li><a href="#rights"><span class="num">11.</span>Your Rights &amp; Choices</a></li>
+      <li><a href="#changes"><span class="num">12.</span>Changes to This Policy</a></li>
+      <li><a href="#contact"><span class="num">13.</span>Contact Us</a></li>
+    </ol>
+  </nav>
+
+  <section id="introduction">
+    <h2><span class="num">1.</span>Introduction</h2>
+    <p>Gruhini Foods ("we," "us," "our") operates a mobile and web application that connects customers with home kitchens and small food businesses for snacks, sweets, and pickles. This policy explains what information we collect from Customers, Shop Owners, and Admins who use the app, why we collect it, and how it is stored and protected.</p>
+    <p>By creating an account or using Gruhini Foods, you agree to the collection and use of information as described in this policy.</p>
+  </section>
+
+  <section id="information-we-collect">
+    <h2><span class="num">2.</span>Information We Collect</h2>
+    <p>The information we collect depends on how you use the app:</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Information Shared</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Name and phone number</td><td>Creating and identifying your account, so orders can be placed and delivered to the right person</td></tr>
+          <tr><td>Delivery address</td><td>Delivering your order to the correct location</td></tr>
+          <tr><td>Precise or approximate location (optional)</td><td>Auto-filling your delivery address when you choose to share your location</td></tr>
+          <tr><td>Order and purchase history</td><td>Showing your past and current orders, and letting you reorder favorites</td></tr>
+          <tr><td>Payment confirmation details (payment ID, status)</td><td>Confirming and verifying that a payment was completed</td></tr>
+          <tr><td>Shop details and product listings (Shop Owners)</td><td>Displaying your products and managing your catalog and incoming orders</td></tr>
+          <tr><td>Login credentials (Shop Owners and Admins)</td><td>Securing access to shop management and admin tools</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>We do not ask for your email address, date of birth, or government ID to use Gruhini Foods as a customer.</p>
+  </section>
+
+  <section id="how-we-use">
+    <h2><span class="num">3.</span>How We Use Your Information</h2>
+    <ul>
+      <li>To create and maintain your Customer, Shop Owner, or Admin account.</li>
+      <li>To process and deliver your orders, and keep you updated on their status.</li>
+      <li>To let Shop Owners manage their product catalog and fulfill orders.</li>
+      <li>To let Admins verify payments, manage shop owners, and oversee the marketplace.</li>
+      <li>To auto-fill a delivery address when you choose to share your device location.</li>
+      <li>To maintain the security of accounts and prevent misuse of the app.</li>
+    </ul>
+    <p>We do not use your information for advertising, and we do not sell your information to third parties.</p>
+  </section>
+
+  <section id="location">
+    <h2><span class="num">4.</span>Location Data</h2>
+    <p>Gruhini Foods can use your device's GPS location to help fill in your delivery address automatically. This is entirely optional — you can always type your address manually instead.</p>
+    <div class="callout">
+      <strong>How it works:</strong> when you choose "use my location," your coordinates are sent to the OpenStreetMap Nominatim service, which converts them into a readable street address. Your coordinates are used only for this conversion and are not stored by Gruhini Foods beyond the resulting address.
+    </div>
+  </section>
+
+  <section id="payments">
+    <h2><span class="num">5.</span>Payments</h2>
+    <p>All payments in Gruhini Foods are processed through Razorpay, a licensed third-party payment gateway, using UPI, debit/credit cards, or net banking. Card numbers, UPI IDs, and other sensitive payment details are entered directly into Razorpay's secure checkout — Gruhini Foods never receives or stores your raw card or UPI details. We only receive a payment confirmation (a payment ID and status) to verify that your order was paid for.</p>
+  </section>
+
+  <section id="sharing">
+    <h2><span class="num">6.</span>Who We Share Data With</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Recipient</th><th>What's Shared &amp; Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Razorpay</td><td>Order amount and payment details, to process your payment</td></tr>
+          <tr><td>OpenStreetMap Nominatim</td><td>GPS coordinates, only when you opt in to auto-fill your address</td></tr>
+          <tr><td>Supabase (our database provider)</td><td>Account, order, and shop data, to host and run the app's backend securely</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>We do not share your information with advertisers or data brokers.</p>
+  </section>
+
+  <section id="security">
+    <h2><span class="num">7.</span>Data Storage &amp; Security</h2>
+    <ul>
+      <li>All data sent between the app and our servers is encrypted in transit over HTTPS.</li>
+      <li>Shop Owner and Admin passwords are hashed with bcrypt before they are stored — we never store passwords in plain text, and your password itself is never visible to us after account creation.</li>
+      <li>Customer account passwords are stored only on your own device and are never transmitted to or stored on our servers.</li>
+      <li>Our database is protected with Row Level Security (RLS), which restricts what data each part of the app is allowed to read or write.</li>
+    </ul>
+  </section>
+
+  <section id="retention">
+    <h2><span class="num">8.</span>Data Retention</h2>
+    <p>We retain your account and order information for as long as your account remains active, so that your order history and saved details remain available to you. If you delete your account, your customer record is removed as described in the next section.</p>
+  </section>
+
+  <section id="deletion">
+    <h2><span class="num">9.</span>Account Deletion</h2>
+    <p>Customers can delete their account at any time from <strong>Profile &gt; Delete Account</strong> within the app. This permanently removes your customer record (name, phone number, and address) from our database. This action cannot be undone.</p>
+    <p>Shop Owners and Admins who wish to delete their account can contact us using the details below.</p>
+  </section>
+
+  <section id="children">
+    <h2><span class="num">10.</span>Children's Privacy</h2>
+    <p>Gruhini Foods is not directed at children, and we do not knowingly collect information from anyone under the age of 18. If you believe a child has provided us with personal information, please contact us so we can remove it.</p>
+  </section>
+
+  <section id="rights">
+    <h2><span class="num">11.</span>Your Rights &amp; Choices</h2>
+    <ul>
+      <li><strong>Access:</strong> you can view your saved account details from the Profile screen at any time.</li>
+      <li><strong>Correction:</strong> you can update your name, address, and other saved details from the app.</li>
+      <li><strong>Deletion:</strong> you can delete your customer account and data at any time, as described above.</li>
+      <li><strong>Location:</strong> sharing your device location is always optional and can be declined or revoked in your device settings.</li>
+    </ul>
+  </section>
+
+  <section id="changes">
+    <h2><span class="num">12.</span>Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time as the app evolves. Material changes will be reflected in an updated "Last updated" date at the top of this page. Continued use of Gruhini Foods after changes take effect constitutes acceptance of the revised policy.</p>
+  </section>
+
+  <section id="contact">
+    <h2><span class="num">13.</span>Contact Us</h2>
+    <p>If you have questions about this Privacy Policy or how your information is handled, reach out to us directly:</p>
+    <div class="contact-card">
+      <div class="contact-row"><span class="label">Email</span><a href="mailto:cloudeontech@gmail.com">cloudeontech@gmail.com</a></div>
+      <div class="contact-row"><span class="label">Phone</span><a href="tel:+918125125100">+91 8125125100</a></div>
+    </div>
+  </section>
+
+  <footer class="closing">
+    <div class="brand">Gruhini Foods</div>
+    <p>Thank you for trusting Gruhini Foods. We are committed to protecting your privacy and providing a safe, secure, and transparent experience.</p>
+  </footer>
+
+</div>

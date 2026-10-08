@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../state/business_settings_provider.dart';
 import '../../state/cart_provider.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/delivery_fee.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/responsive_center.dart';
 import 'payment_confirmation_screen.dart';
@@ -24,7 +25,9 @@ class UpiPaymentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final business = context.watch<BusinessSettingsProvider>();
-    final total = context.watch<CartProvider>().total;
+    final cartTotal = context.watch<CartProvider>().total;
+    final total =
+        cartTotal + calculateDeliveryFee(cartTotal, business.settingsSnapshot);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pay via UPI')),

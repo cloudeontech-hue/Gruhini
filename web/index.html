@@ -31,6 +31,15 @@
 
   <title>Gruhini Foods</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Google Maps JavaScript API, required by google_maps_flutter on web
+       (lib/screens/checkout/location_picker_screen.dart). Same Google
+       Cloud API key as GOOGLE_GEOCODING_API_KEY in .env - restrict it to
+       this site's HTTP referrer in Google Cloud Console rather than
+       relying on secrecy, same as the Android key is restricted by
+       package name + SHA-1. Must be a static tag (not read from .env at
+       runtime) since the Maps JS SDK has to load before Flutter starts. -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9_1gEQ7735QAYzXlMas_xwh3W6jA20Is"></script>
 </head>
 <body>
   <!--

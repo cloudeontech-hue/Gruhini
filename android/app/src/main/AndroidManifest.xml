@@ -1,5 +1,10 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Voice search in the Home screen's search bar (speech_to_text). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="Gruhini Foods"
         android:name="${applicationName}"
@@ -31,6 +36,26 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Required by the Maps SDK for Android (google_maps_flutter).
+             Value injected at build time from the root .env file's
+             GOOGLE_GEOCODING_API_KEY - see android/app/build.gradle.kts. -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${googleMapsApiKey}" />
+
+        <!-- Razorpay's checkout:1.6.+ AAR declares BaseCheckoutActivity with a
+             fixed screen orientation, which Play Console's large-screen
+             review flags (Android now discourages orientation/resizability
+             restrictions on tablets/foldables). This is Razorpay's own
+             manifest entry, not ours - can't fix it in their compiled
+             source, so the merger override below strips the restriction
+             from the final merged manifest instead. -->
+        <activity
+            android:name="com.razorpay.BaseCheckoutActivity"
+            android:screenOrientation="unspecified"
+            tools:node="merge"
+            tools:replace="android:screenOrientation" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -50,6 +75,13 @@
         <intent>
             <action android:name="android.intent.action.VIEW"/>
             <data android:scheme="upi"/>
+        </intent>
+        <!-- Android 11+ package visibility: without this, speech_to_text
+             can't see the device's speech recognition service and voice
+             search silently reports "not available" even with the
+             RECORD_AUDIO permission granted. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
 </manifest>

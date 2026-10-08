@@ -11,6 +11,7 @@ import '../../state/auth_provider.dart';
 import '../../state/business_settings_provider.dart';
 import '../../state/cart_provider.dart';
 import '../../state/orders_provider.dart';
+import '../../utils/delivery_fee.dart';
 import '../../widgets/responsive_center.dart';
 import 'order_placed_screen.dart';
 import 'upi_payment_screen.dart';
@@ -178,7 +179,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     final cart = context.read<CartProvider>();
     final auth = context.read<AuthProvider>();
     final orders = context.read<OrdersProvider>();
-    final total = cart.total;
+    // Includes delivery fee - this is the actual amount charged via
+    // Razorpay, so it must match what CartScreen/OrderSummaryScreen show
+    // the customer before they tap Pay (both use the same
+    // calculateDeliveryFee helper against cart.total).
+    final total =
+        cart.total + calculateDeliveryFee(cart.total, business.settingsSnapshot);
 
     setState(() => _isProcessing = true);
     // Only ever called from the Pay Now button, which only renders when
@@ -266,59 +272,112 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     }
   }
 
+  static const _paymentMethods = [
+    (
+      icon: Icons.qr_code_2_outlined,
+      label: 'UPI',
+      subtitle: 'Google Pay, PhonePe, Paytm & more',
+    ),
+    (
+      icon: Icons.credit_card_outlined,
+      label: 'Credit / Debit Card',
+      subtitle: 'Visa, Mastercard, RuPay & more',
+    ),
+    (
+      icon: Icons.account_balance_outlined,
+      label: 'Net Banking',
+      subtitle: 'All major banks',
+    ),
+    (
+      icon: Icons.account_balance_wallet_outlined,
+      label: 'Wallets',
+      subtitle: 'Amazon Pay, Freecharge & more',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final razorpayAvailable = _razorpaySupported || _razorpayWebServiceSupported;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Payment Method')),
       body: ResponsiveCenter(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: colorScheme.primary,
-                    size: 20,
+            ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'We do not offer Cash on Delivery. All orders are prepaid.',
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: colorScheme.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'We do not offer Cash on Delivery. All orders are prepaid.',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (razorpayAvailable) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'Select a payment method',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  for (final method in _paymentMethods) ...[
+                    _PaymentMethodTile(
+                      icon: method.icon,
+                      label: method.label,
+                      subtitle: method.subtitle,
+                      onTap: _isProcessing ? null : _payWithRazorpay,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                 ],
-              ),
+              ],
             ),
+            if (_isProcessing)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: colorScheme.surface.withValues(alpha: 0.7),
+                  child: const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 12),
+                        Text('Opening payment...'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: (_razorpaySupported || _razorpayWebServiceSupported)
-              ? FilledButton.icon(
-                  onPressed: _isProcessing ? null : _payWithRazorpay,
-                  icon: _isProcessing
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.payment),
-                  label: Text(_isProcessing ? 'Processing...' : 'Pay Now'),
-                )
-              : Column(
+      bottomNavigationBar: razorpayAvailable
+          ? null
+          : SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     FilledButton(
@@ -340,6 +399,62 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     ),
                   ],
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentMethodTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  const _PaymentMethodTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: colorScheme.primaryContainer,
+                foregroundColor: colorScheme.primary,
+                child: Icon(icon),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+            ],
+          ),
         ),
       ),
     );

@@ -1,8 +1,8 @@
 // One-time migration: uploads the bundled product photos to Supabase
 // Storage and inserts the existing seed products/customers/orders into the
-// tables created by scripts/supabase_schema.sql.
+// tables created by supabase/migrations/20260626123500_initial_schema.sql.
 //
-// Run AFTER scripts/supabase_schema_security.sql has been applied, so the
+// Run AFTER supabase/migrations/20260702132100_security_hardening_bcrypt_auth.sql has been applied, so the
 // create_shop_owner() RPC (which bcrypt-hashes the password server-side) is
 // available.
 //
@@ -12,9 +12,9 @@
 // is the intended progress output, not leftover debug logging.
 import 'dart:io';
 
-import 'package:gruiny_foods/data/customers_data.dart';
-import 'package:gruiny_foods/data/orders_data.dart';
-import 'package:gruiny_foods/data/products_data.dart';
+import 'package:gruhini_foods/data/customers_data.dart';
+import 'package:gruhini_foods/data/orders_data.dart';
+import 'package:gruhini_foods/data/products_data.dart';
 import 'package:supabase/supabase.dart';
 
 Map<String, String> _loadEnv(String path) {

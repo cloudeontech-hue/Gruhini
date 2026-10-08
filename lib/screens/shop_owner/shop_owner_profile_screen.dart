@@ -179,10 +179,13 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
         );
       }
     } catch (error) {
+      debugPrint('Could not update password: $error');
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not update password: $error')),
+          const SnackBar(
+            content: Text('Could not update your password. Please try again.'),
+          ),
         );
       }
     }

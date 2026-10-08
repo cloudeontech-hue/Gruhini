@@ -60,7 +60,7 @@ class ShopOwnersProvider extends ChangeNotifier {
   }
 
   /// Verifies [currentPassword] and updates to [newPassword] via the
-  /// `change_shop_owner_password` RPC (see scripts/supabase_schema_security.sql),
+  /// `change_shop_owner_password` RPC (see supabase/migrations/20260702132100_security_hardening_bcrypt_auth.sql),
   /// which does bcrypt verification and re-hashing server-side.
   /// Returns false if [currentPassword] didn't match.
   Future<bool> changePassword({

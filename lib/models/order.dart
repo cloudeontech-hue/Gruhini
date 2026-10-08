@@ -46,10 +46,16 @@ class OrderLineItem {
   final double price;
   final int quantity;
 
+  /// Null for orders placed before this field existed - Reorder (see
+  /// lib/utils/reorder.dart) falls back to matching by [productName]
+  /// against the live catalog for those.
+  final String? productId;
+
   const OrderLineItem({
     required this.productName,
     required this.price,
     required this.quantity,
+    this.productId,
   });
 
   double get subtotal => price * quantity;
@@ -58,12 +64,14 @@ class OrderLineItem {
     productName: map['productName'] as String,
     price: (map['price'] as num).toDouble(),
     quantity: map['quantity'] as int,
+    productId: map['productId'] as String?,
   );
 
   Map<String, dynamic> toMap() => {
     'productName': productName,
     'price': price,
     'quantity': quantity,
+    'productId': productId,
   };
 }
 
@@ -91,7 +99,7 @@ class Order {
 
   /// Razorpay's order id (distinct from [transactionId], which holds the
   /// Razorpay *payment* id for this payment method) - null for the manual
-  /// UPI flow. See scripts/supabase_schema_razorpay.sql.
+  /// UPI flow. See supabase/migrations/20260710115900_razorpay_order_id.sql.
   String? razorpayOrderId;
 
   Order({

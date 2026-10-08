@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.gruinyfoods" "\0"
-            VALUE "FileDescription", "gruiny_foods" "\0"
+            VALUE "FileDescription", "Gruhini Foods" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "gruiny_foods" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.gruinyfoods. All rights reserved." "\0"
             VALUE "OriginalFilename", "gruiny_foods.exe" "\0"
-            VALUE "ProductName", "gruiny_foods" "\0"
+            VALUE "ProductName", "Gruhini Foods" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

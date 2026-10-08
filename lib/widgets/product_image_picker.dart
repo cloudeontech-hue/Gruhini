@@ -30,10 +30,11 @@ class ProductImagePicker extends StatelessWidget {
       final bytes = await pickImage();
       if (bytes != null) onImagePicked(bytes);
     } catch (error) {
+      debugPrint('Could not load image: $error');
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not load image: $error')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load that image. Please try again.')),
+        );
       }
     }
   }

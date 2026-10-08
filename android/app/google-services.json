@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "76349179997",
+    "project_id": "gruhini-foods-73706",
+    "storage_bucket": "gruhini-foods-73706.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:76349179997:android:72c4f5f7e680dea8b0e5b4",
+        "android_client_info": {
+          "package_name": "com.gruhinifoods.gruhini_foods"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "76349179997-33civ55m0l6v9cgsefc117dfoiboid54.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gruhinifoods.gruhini_foods",
+            "certificate_hash": "88fce57480bfe6a8cf216e16ef50b7f48b703116"
+          }
+        },
+        {
+          "client_id": "76349179997-hqu84pqbgubcaul8rm7ham5i5gbu6hu4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gruhinifoods.gruhini_foods",
+            "certificate_hash": "c891cee73d3409d39c4db1497aa07668c51e9083"
+          }
+        },
+        {
+          "client_id": "76349179997-m5fg11v5qd7sepj3crfpn1cu068ioig4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gruhinifoods.gruhini_foods",
+            "certificate_hash": "889242ce1a57f68c82ead1b02683a95842e1387d"
+          }
+        },
+        {
+          "client_id": "76349179997-am7vfah5890q3h0iqg4u9cffu4riih50.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEP-n4N9oarCHUvcz1jthOOXXmdzDpbgA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "76349179997-am7vfah5890q3h0iqg4u9cffu4riih50.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

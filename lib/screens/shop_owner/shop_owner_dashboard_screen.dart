@@ -30,7 +30,25 @@ class ShopOwnerDashboardScreen extends StatelessWidget {
     final revenue = orders.fold(0.0, (sum, o) => sum + o.total);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Welcome back, ${auth.shopName}')),
+      appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.gold, width: 1.5),
+            ),
+            padding: const EdgeInsets.all(2),
+            child: const ClipOval(
+              child: Image(
+                image: AssetImage('assets/images/logo.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        ),
+        title: Text('Welcome back, ${auth.shopName}'),
+      ),
       body: ResponsiveCenter(
         child: ListView(
           padding: const EdgeInsets.all(16),

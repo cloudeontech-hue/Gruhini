@@ -149,6 +149,7 @@ class OrdersProvider extends ChangeNotifier {
             productName: c.product.name,
             price: c.product.price,
             quantity: c.quantity,
+            productId: c.product.id,
           ),
         )
         .toList(),
@@ -264,6 +265,44 @@ class OrdersProvider extends ChangeNotifier {
         })
         .eq('id', orderId);
     notifyListeners();
+  }
+
+  /// True while an order is still cancellable by the customer. Mirrors the
+  /// published refunds policy exactly (see the gh-pages site's refunds.html
+  /// - "cancelled and fully refunded only while it is still in the Payment
+  /// Verification stage, that is, before the shop owner has accepted it"),
+  /// since products are prepared fresh to order once accepted.
+  bool canCustomerCancel(Order order) =>
+      order.status == OrderStatus.paymentVerification;
+
+  /// Customer-initiated cancellation. Re-checks [canCustomerCancel] against
+  /// the current status rather than trusting whatever the UI last rendered -
+  /// a shop owner may have accepted the order in the seconds between the
+  /// button appearing and being tapped. Returns false if it's too late.
+  ///
+  /// Note this only moves the order to [OrderStatus.cancelled]; it does not
+  /// issue the Razorpay refund, which is handled manually per the refunds
+  /// policy (5-7 business days). The UI says so before confirming.
+  Future<bool> cancelByCustomer(String orderId) async {
+    final order = _orders.where((o) => o.id == orderId).firstOrNull;
+    if (order == null || !canCustomerCancel(order)) return false;
+
+    order.status = OrderStatus.cancelled;
+    try {
+      await supabase
+          .from('orders')
+          .update({'status': OrderStatus.cancelled.name})
+          .eq('id', orderId);
+    } catch (error) {
+      // Put the local state back so the UI doesn't show "cancelled" for an
+      // order the server still considers live.
+      order.status = OrderStatus.paymentVerification;
+      debugPrint('Could not cancel order: $error');
+      notifyListeners();
+      rethrow;
+    }
+    notifyListeners();
+    return true;
   }
 
   /// Test-only: populates orders directly, bypassing Supabase, since widget

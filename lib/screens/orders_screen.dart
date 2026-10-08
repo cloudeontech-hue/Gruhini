@@ -6,6 +6,7 @@ import '../state/auth_provider.dart';
 import '../state/orders_provider.dart';
 import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
+import '../utils/reorder.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/responsive_center.dart';
 import 'order_tracking_screen.dart';
@@ -133,6 +134,17 @@ class _OrderCard extends StatelessWidget {
                 (item) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Text('${item.productName} x${item.quantity}'),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => reorderInto(context, order),
+                  icon: const Icon(Icons.replay, size: 16),
+                  label: const Text('Reorder'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
               ),
               const Divider(height: 16),

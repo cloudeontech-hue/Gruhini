@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../utils/app_colors.dart';
 
@@ -58,8 +57,8 @@ class AdminSidebar extends StatelessWidget {
                       ),
                     ),
                     child: ClipOval(
-                      child: SvgPicture.asset(
-                        'assets/images/logo.svg',
+                      child: Image.asset(
+                        'assets/images/logo.png',
                         fit: BoxFit.cover,
                       ),
                     ),

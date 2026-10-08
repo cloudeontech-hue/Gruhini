@@ -5,8 +5,10 @@ import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../screens/product_details_screen.dart';
 import '../state/cart_provider.dart';
+import '../state/reviews_provider.dart';
 import '../utils/formatters.dart';
 import 'product_image.dart';
+import 'star_rating.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -17,6 +19,7 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final quantity = cart.quantityOf(product.id);
+    final rating = context.watch<ReviewsProvider>().summaryFor(product.id);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -76,6 +79,26 @@ class ProductCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    // Only shown once the product has at least one review -
+                    // an empty star row reads as "0 stars", which is worse
+                    // than no badge at all for a brand-new item.
+                    if (rating != null)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          StarRatingDisplay(rating: rating.averageRating),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${rating.averageRating} (${rating.reviewCount})',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
                     Text(
                       product.unit,
                       maxLines: 1,
@@ -126,23 +149,28 @@ class _AddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: enabled ? () => context.read<CartProvider>().add(product) : null,
-      child: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: enabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          '+',
-          style: TextStyle(
-            color: enabled ? colorScheme.onPrimary : colorScheme.onSurface.withValues(alpha: 0.38),
-            fontSize: 20,
-            height: 1,
-            fontWeight: FontWeight.w400,
+    return Semantics(
+      button: true,
+      label: 'Add ${product.name} to cart',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: enabled ? () => context.read<CartProvider>().add(product) : null,
+        child: Container(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: enabled ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '+',
+            style: TextStyle(
+              color: enabled ? colorScheme.onPrimary : colorScheme.onSurface.withValues(alpha: 0.38),
+              fontSize: 20,
+              height: 1,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ),
       ),
@@ -176,6 +204,7 @@ class _QuantityStepper extends StatelessWidget {
               padding: EdgeInsets.zero,
               visualDensity: VisualDensity.compact,
               icon: Icon(Icons.remove, size: 14, color: colorScheme.onPrimary),
+              tooltip: 'Decrease quantity',
               onPressed: () => cart.decrement(product.id),
             ),
           ),
@@ -193,6 +222,7 @@ class _QuantityStepper extends StatelessWidget {
               padding: EdgeInsets.zero,
               visualDensity: VisualDensity.compact,
               icon: Icon(Icons.add, size: 14, color: colorScheme.onPrimary),
+              tooltip: 'Increase quantity',
               onPressed: () => cart.add(product),
             ),
           ),

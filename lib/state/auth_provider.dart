@@ -18,7 +18,6 @@ class AuthProvider extends ChangeNotifier {
   static const _customerNameKey = 'customer_name';
   static const _customerPhoneKey = 'customer_phone';
   static const _customerAddressKey = 'customer_address';
-  static const _customerPasswordKey = 'customer_password';
   static const _shopOwnerIdKey = 'shop_owner_id';
   static const _shopOwnerNameKey = 'shop_owner_name';
   static const _shopNameKey = 'shop_name';
@@ -29,7 +28,6 @@ class AuthProvider extends ChangeNotifier {
   String _customerName = '';
   String _customerPhone = '';
   String _customerAddress = '';
-  String _customerPassword = '';
   String _shopOwnerId = '';
   String _shopOwnerUsername = '';
   String _shopName = '';
@@ -41,7 +39,6 @@ class AuthProvider extends ChangeNotifier {
   String get customerName => _customerName;
   String get customerPhone => _customerPhone;
   String get customerAddress => _customerAddress;
-  String get customerPassword => _customerPassword;
   String get shopOwnerId => _shopOwnerId;
   String get shopOwnerUsername => _shopOwnerUsername;
   String get shopName => _shopName;
@@ -59,7 +56,6 @@ class AuthProvider extends ChangeNotifier {
     _customerName = prefs.getString(_customerNameKey) ?? '';
     _customerPhone = prefs.getString(_customerPhoneKey) ?? '';
     _customerAddress = prefs.getString(_customerAddressKey) ?? '';
-    _customerPassword = prefs.getString(_customerPasswordKey) ?? '';
     _shopOwnerId = prefs.getString(_shopOwnerIdKey) ?? '';
     _shopOwnerUsername = prefs.getString(_shopOwnerNameKey) ?? '';
     _shopName = prefs.getString(_shopNameKey) ?? '';
@@ -69,91 +65,138 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loginAsCustomer({
+  /// Test-only bypass for [loginAsCustomerViaOtp]'s real
+  /// get_or_create_customer RPC, which needs a live Supabase connection
+  /// the test environment doesn't have — same reasoning as
+  /// [simulateAdminLoginForTest] above.
+  @visibleForTesting
+  void simulateCustomerLoginForTest({
     required String name,
     required String phone,
-    required String password,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedPhone = prefs.getString(_customerPhoneKey) ?? '';
-    final storedPassword = prefs.getString(_customerPasswordKey) ?? '';
-
-    // Returning customer on the same device: verify their password.
-    if (storedPhone == phone && storedPassword.isNotEmpty) {
-      final inputHash = hashPassword(password);
-      // Accept both the hash (post-migration) and the raw value (pre-migration)
-      // so existing users are not locked out on first launch after this update.
-      if (storedPassword != inputHash && storedPassword != password) {
-        throw AuthException('Incorrect password. Please try again.');
-      }
-    }
-
+    String address = '',
+  }) {
     _role = AppRole.customer;
     _customerName = name;
     _customerPhone = phone;
-    _customerPassword = hashPassword(password);
-    await prefs.setString(_roleKey, _role.name);
-    await prefs.setString(_customerNameKey, name);
-    await prefs.setString(_customerPhoneKey, phone);
-    await prefs.setString(_customerPasswordKey, hashPassword(password));
-    await _saveNewCustomer(name: name, phone: phone, address: _customerAddress);
+    _customerAddress = address;
     notifyListeners();
   }
 
-  /// Persists first-time customers to Supabase's `customers` table so they
-  /// show up in the head admin's Customers screen — keyed by phone number,
-  /// the natural unique id customers log in with. Returning customers
-  /// (phone already on file) are left untouched.
-  Future<void> _saveNewCustomer({
+  /// Logs in (or, for a brand-new phone number, silently creates) a
+  /// customer account via the get_or_create_customer() RPC —
+  /// supabase/migrations/20260910120400_customer_otp_auth.sql. Call this only *after*
+  /// LoginScreen has already verified the phone number with Firebase
+  /// Phone Auth (a real SMS OTP) — there's no password to check
+  /// server-side any more, since Firebase's verification already proved
+  /// ownership of the phone number more strongly than a password ever
+  /// did. The same phone number reconnects to the same real account from
+  /// any device or after a logout, exactly like the password-based
+  /// version did, just without a password to remember or reset.
+  Future<void> loginAsCustomerViaOtp({
     required String name,
     required String phone,
-    required String address,
   }) async {
+    List rows;
     try {
-      final existing = await supabase
-          .from('customers')
-          .select('id')
-          .eq('id', phone)
-          .maybeSingle();
-      if (existing != null) return;
-      await supabase.from('customers').insert({
-        'id': phone,
-        'name': name,
-        'phone': phone,
-        'address': address,
-      });
-    } catch (error) {
-      // Customer login is otherwise local-only (SharedPreferences); don't
-      // let a Supabase hiccup (e.g. offline) block the customer from
-      // logging in just because we couldn't sync them to the admin list.
-      debugPrint('Could not save customer record: $error');
-    }
-  }
-
-  /// Checks [phone] against the customer stored on this device, without
-  /// mutating any state. Used by the forgot-password flow to verify the
-  /// phone before asking for a new password.
-  Future<bool> isRegisteredPhone(String phone) async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedPhone = prefs.getString(_customerPhoneKey) ?? '';
-    return storedPhone.isNotEmpty && storedPhone == phone;
-  }
-
-  /// Resets the password for the customer whose phone is stored on this
-  /// device. Throws [AuthException] if the phone doesn't match.
-  Future<void> resetCustomerPassword({
-    required String phone,
-    required String newPassword,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedPhone = prefs.getString(_customerPhoneKey) ?? '';
-    if (storedPhone.isEmpty || storedPhone != phone) {
+      rows = await supabase.rpc(
+        'get_or_create_customer',
+        params: {'p_phone': phone.trim(), 'p_name': name.trim()},
+      ) as List;
+    } catch (e) {
+      debugPrint('get_or_create_customer unavailable ($e).');
       throw AuthException(
-        'No account found with this phone number on this device.',
+        'Could not reach the server. Please check your connection and try again.',
       );
     }
-    _customerPassword = hashPassword(newPassword);
-    await prefs.setString(_customerPasswordKey, hashPassword(newPassword));
+
+    if (rows.isEmpty) {
+      throw AuthException('Could not sign you in. Please try again.');
+    }
+
+    final row = rows.first as Map<String, dynamic>;
+    _role = AppRole.customer;
+    // Use the server's stored name/address, not what was just typed — a
+    // returning customer's real profile, not a blank slate.
+    _customerName = row['name'] as String;
+    _customerPhone = row['phone'] as String;
+    _customerAddress = row['address'] as String;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roleKey, _role.name);
+    await prefs.setString(_customerNameKey, _customerName);
+    await prefs.setString(_customerPhoneKey, _customerPhone);
+    await prefs.setString(_customerAddressKey, _customerAddress);
+    notifyListeners();
+  }
+
+  /// Checks whether [googleUid] (Firebase's uid for a signed-in Google
+  /// account) is already linked to a customer, via
+  /// get_customer_by_google_uid() — supabase/migrations/20260915122700_customer_google_auth.sql.
+  /// Call this right after Firebase confirms the Google sign-in, to decide
+  /// whether LoginScreen needs to ask for a phone number (first time ever
+  /// seeing this Google account) or can skip straight to
+  /// [loginAsCustomerViaGoogle] with an already-known phone.
+  Future<Map<String, dynamic>?> findCustomerByGoogleUid(
+    String googleUid,
+  ) async {
+    try {
+      final rows =
+          await supabase.rpc(
+                'get_customer_by_google_uid',
+                params: {'p_google_uid': googleUid},
+              )
+              as List;
+      return rows.isEmpty ? null : rows.first as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('get_customer_by_google_uid unavailable ($e).');
+      return null;
+    }
+  }
+
+  /// Logs in via link_google_customer() —
+  /// supabase/migrations/20260915122700_customer_google_auth.sql. Call this only *after*
+  /// Firebase has already confirmed the Google sign-in - [googleUid] is
+  /// Firebase's uid for that account, which is what actually proves
+  /// identity here; [phone] only matters the first time a given Google
+  /// account is seen (every later call re-links the same row and ignores
+  /// [phone]/[name], same convention as [loginAsCustomerViaOtp]).
+  Future<void> loginAsCustomerViaGoogle({
+    required String googleUid,
+    required String phone,
+    required String name,
+  }) async {
+    List rows;
+    try {
+      rows = await supabase.rpc(
+        'link_google_customer',
+        params: {
+          'p_google_uid': googleUid,
+          'p_phone': phone.trim(),
+          'p_name': name.trim(),
+        },
+      ) as List;
+    } catch (e) {
+      debugPrint('link_google_customer unavailable ($e).');
+      throw AuthException(
+        'Could not reach the server. Please check your connection and try again.',
+      );
+    }
+
+    if (rows.isEmpty) {
+      throw AuthException('Could not sign you in. Please try again.');
+    }
+
+    final row = rows.first as Map<String, dynamic>;
+    _role = AppRole.customer;
+    _customerName = row['name'] as String;
+    _customerPhone = row['phone'] as String;
+    _customerAddress = row['address'] as String;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roleKey, _role.name);
+    await prefs.setString(_customerNameKey, _customerName);
+    await prefs.setString(_customerPhoneKey, _customerPhone);
+    await prefs.setString(_customerAddressKey, _customerAddress);
     notifyListeners();
   }
 
@@ -164,21 +207,43 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Also syncs to Supabase (not just local SharedPreferences) so the
+  /// address survives a logout/login, a cleared local storage, or logging
+  /// in on a different device - see supabase/migrations/20260821151700_customer_password_auth.sql
+  /// for the column-level UPDATE grant this needs. Best-effort: a network
+  /// hiccup shouldn't block the local save that the customer is actively
+  /// looking at right now.
   Future<void> updateCustomerAddress(String address) async {
     _customerAddress = address;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_customerAddressKey, address);
+    notifyListeners();
+    try {
+      await supabase
+          .from('customers')
+          .update({'address': address})
+          .eq('id', _customerPhone);
+    } catch (error) {
+      debugPrint('Could not sync address to server: $error');
+    }
+  }
+
+  /// Test-only: sets head-admin state directly, without the real
+  /// authenticate_admin RPC (no live Supabase connection in the test
+  /// environment). There is no dev-credential bypass in [loginAsHeadAdmin]
+  /// itself - that was removed as a release-security fix, since it shipped
+  /// as reachable, decompilable code in every build.
+  @visibleForTesting
+  void simulateAdminLoginForTest({required String username}) {
+    _role = AppRole.headAdmin;
+    _adminId = 'test-admin';
+    _adminUsername = username;
     notifyListeners();
   }
 
   /// Authenticates against the `admins` table via the `authenticate_admin`
   /// security-definer RPC. Credentials are verified server-side with bcrypt;
   /// no password ever leaves the device in hashed form.
-  ///
-  /// Falls back to hardcoded dev credentials if the RPC doesn't exist yet
-  /// (i.e. supabase_schema_security.sql hasn't been applied). Once the
-  /// migration is applied and the first admin is seeded via create_admin(),
-  /// the hardcoded fallback is bypassed automatically.
   Future<void> loginAsHeadAdmin({
     required String username,
     required String password,
@@ -200,17 +265,8 @@ class AuthProvider extends ChangeNotifier {
         authenticated = true;
       }
     } catch (e) {
-      // RPC doesn't exist yet — migration not applied. Fall back to dev
-      // credentials so the app remains usable during development.
-      // Run scripts/supabase_schema_security.sql and then
-      // `select create_admin('admin', 'your-password');` to enable DB-backed auth.
-      debugPrint('authenticate_admin RPC unavailable ($e). '
-          'Using dev fallback — apply supabase_schema_security.sql to fix this.');
-      if (username.trim() == 'admin' && password == 'admin123') {
-        resolvedId = 'dev-admin';
-        resolvedUsername = 'admin';
-        authenticated = true;
-      }
+      debugPrint('authenticate_admin RPC call failed: $e');
+      throw AuthException('Could not reach the server. Please try again.');
     }
 
     if (!authenticated) {
@@ -227,8 +283,67 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Single staff sign-in for both Admins and Shop Owners — see
+  /// StaffLoginScreen. Tries the `authenticate_admin` RPC first, then
+  /// `authenticate_shop_owner`, and sets whichever role matched, so staff
+  /// only need one login screen instead of picking their own role first.
+  ///
+  /// Deliberately does its own RPC calls rather than chaining
+  /// [loginAsHeadAdmin] and [loginAsShopOwner]: both of those throw
+  /// [AuthException] for *both* wrong credentials and a network failure,
+  /// so chaining them would report a server outage as "invalid username or
+  /// password". Calling the RPCs here keeps those two cases separable.
+  Future<void> loginAsStaff({
+    required String username,
+    required String password,
+  }) async {
+    final params = {'p_username': username.trim(), 'p_password': password};
+
+    List adminRows;
+    List ownerRows;
+    try {
+      adminRows = await supabase.rpc('authenticate_admin', params: params) as List;
+      ownerRows = adminRows.isEmpty
+          ? await supabase.rpc('authenticate_shop_owner', params: params) as List
+          : const [];
+    } catch (e) {
+      debugPrint('Staff authentication RPC failed: $e');
+      throw AuthException('Could not reach the server. Please try again.');
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+
+    if (adminRows.isNotEmpty) {
+      final row = adminRows.first as Map<String, dynamic>;
+      _role = AppRole.headAdmin;
+      _adminId = row['id'] as String;
+      _adminUsername = row['username'] as String;
+      await prefs.setString(_roleKey, _role.name);
+      await prefs.setString(_adminIdKey, _adminId);
+      await prefs.setString(_adminUsernameKey, _adminUsername);
+      notifyListeners();
+      return;
+    }
+
+    if (ownerRows.isNotEmpty) {
+      final row = ownerRows.first as Map<String, dynamic>;
+      _role = AppRole.shopOwner;
+      _shopOwnerId = row['id'] as String;
+      _shopOwnerUsername = row['username'] as String;
+      _shopName = row['shop_name'] as String;
+      await prefs.setString(_roleKey, _role.name);
+      await prefs.setString(_shopOwnerIdKey, _shopOwnerId);
+      await prefs.setString(_shopOwnerNameKey, _shopOwnerUsername);
+      await prefs.setString(_shopNameKey, _shopName);
+      notifyListeners();
+      return;
+    }
+
+    throw AuthException('Invalid username or password.');
+  }
+
   /// Looks up the shop owner via the `authenticate_shop_owner` RPC (see
-  /// scripts/supabase_schema_security.sql), which verifies the password with
+  /// supabase/migrations/20260702132100_security_hardening_bcrypt_auth.sql), which verifies the password with
   /// bcrypt server-side. The app sends the plain-text password; it is never
   /// hashed client-side, and `password_hash` is never returned to the client.
   ///
@@ -282,12 +397,32 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Deletes this customer's profile from the `customers` table (best
+  /// effort - a Supabase hiccup shouldn't block the local part, same
+  /// philosophy as [_saveNewCustomer]) and clears the local session exactly
+  /// like [logout].
+  ///
+  /// Order records are intentionally kept, keyed by phone number rather
+  /// than deleted alongside the profile - retaining transaction history for
+  /// accounting/dispute-resolution purposes is standard practice for a paid
+  /// service and is disclosed in the privacy policy.
+  Future<void> deleteAccount() async {
+    final phone = _customerPhone;
+    if (phone.isNotEmpty) {
+      try {
+        await supabase.from('customers').delete().eq('id', phone);
+      } catch (error) {
+        debugPrint('Could not delete customer record: $error');
+      }
+    }
+    await logout();
+  }
+
   Future<void> logout() async {
     _role = AppRole.none;
     _customerName = '';
     _customerPhone = '';
     _customerAddress = '';
-    _customerPassword = '';
     _shopOwnerId = '';
     _shopOwnerUsername = '';
     _shopName = '';
@@ -298,7 +433,6 @@ class AuthProvider extends ChangeNotifier {
     await prefs.remove(_customerNameKey);
     await prefs.remove(_customerPhoneKey);
     await prefs.remove(_customerAddressKey);
-    await prefs.remove(_customerPasswordKey);
     await prefs.remove(_shopOwnerIdKey);
     await prefs.remove(_shopOwnerNameKey);
     await prefs.remove(_shopNameKey);

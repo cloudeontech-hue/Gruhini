@@ -5,6 +5,9 @@ plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Firebase Phone Auth (customer OTP login) - reads google-services.json
+    // in this same directory.
+    id("com.google.gms.google-services")
 }
 
 // Release signing comes from android/key.properties, which is git-ignored
@@ -19,8 +22,27 @@ if (hasReleaseSigning) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+// Google Maps SDK for Android requires its API key declared natively in
+// AndroidManifest.xml (unlike the Geocoding API, which is a plain HTTP
+// call from Dart and reads GOOGLE_GEOCODING_API_KEY via flutter_dotenv at
+// runtime). Rather than duplicating the key in a second place, read it
+// out of the same root .env file at build time and inject it via a
+// manifest placeholder - see the meta-data entry in AndroidManifest.xml.
+// Same key as GOOGLE_GEOCODING_API_KEY: one Google Cloud API key with
+// both the Geocoding API and Maps SDK for Android enabled works for both.
+val dotEnvFile = rootProject.file("../.env")
+var googleMapsApiKey = ""
+if (dotEnvFile.exists()) {
+    dotEnvFile.forEachLine { line ->
+        val trimmed = line.trim()
+        if (trimmed.startsWith("GOOGLE_GEOCODING_API_KEY=")) {
+            googleMapsApiKey = trimmed.substringAfter("=").trim()
+        }
+    }
+}
+
 android {
-    namespace = "com.gruinyfoods.gruiny_foods"
+    namespace = "com.gruhinifoods.gruhini_foods"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -31,13 +53,14 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.gruinyfoods.gruiny_foods"
+        applicationId = "com.gruhinifoods.gruhini_foods"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["googleMapsApiKey"] = googleMapsApiKey
     }
 
     signingConfigs {
@@ -63,6 +86,12 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

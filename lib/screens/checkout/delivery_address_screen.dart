@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/auth_provider.dart';
+import '../../state/business_settings_provider.dart';
+import '../../utils/delivery_fee.dart';
 import '../../widgets/address_form_fields.dart';
 import 'order_summary_screen.dart';
 
@@ -24,10 +26,43 @@ class _DeliveryAddressScreenState extends State<DeliveryAddressScreen> {
     super.dispose();
   }
 
+  /// The pincode actually being delivered to - from the form's own field
+  /// while adding/editing an address, or extracted from the composed
+  /// saved-address string (AddressFieldControllers.compose() always ends
+  /// it with "- NNNNNN") when reusing a saved one.
+  String _pincodeFor(AuthProvider auth, bool needsForm) {
+    if (needsForm) return _address.pincode.text.trim();
+    final match = RegExp(r'-\s*(\d{6})\s*$').firstMatch(auth.customerAddress);
+    return match?.group(1) ?? '';
+  }
+
   Future<void> _continue(AuthProvider auth) async {
     final needsForm = _addingNew || auth.customerAddress.trim().isEmpty;
+    if (needsForm && !_formKey.currentState!.validate()) return;
+
+    final business = context.read<BusinessSettingsProvider>();
+    final pincode = _pincodeFor(auth, needsForm);
+    if (!isPincodeServiceable(pincode, business.settingsSnapshot)) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Not deliverable here'),
+          content: Text(
+            'Sorry, we don\'t currently deliver to $pincode. '
+            'Please try a different address.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     if (needsForm) {
-      if (!_formKey.currentState!.validate()) return;
       setState(() => _isSaving = true);
       await auth.updateCustomerAddress(_address.compose());
       if (mounted) setState(() => _isSaving = false);

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'checkout/delivery_address_screen.dart';
+import '../state/business_settings_provider.dart';
 import '../state/cart_provider.dart';
 import '../state/products_provider.dart';
+import '../utils/delivery_fee.dart';
 import '../utils/formatters.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/product_image.dart';
@@ -15,6 +17,9 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    final business = context.watch<BusinessSettingsProvider>();
+    final deliveryFee = calculateDeliveryFee(cart.total, business.settingsSnapshot);
+    final grandTotal = cart.total + deliveryFee;
     final items = cart.items;
     // Subscribe so cart line items refresh immediately if an admin updates
     // a product (e.g. its photo) while it's already sitting in the cart.
@@ -59,12 +64,14 @@ class CartScreen extends StatelessWidget {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.remove_circle_outline),
+                                  tooltip: 'Decrease quantity',
                                   onPressed: () =>
                                       cart.decrement(item.product.id),
                                 ),
                                 Text('${item.quantity}'),
                                 IconButton(
                                   icon: const Icon(Icons.add_circle_outline),
+                                  tooltip: 'Increase quantity',
                                   onPressed: () => cart.add(item.product),
                                 ),
                                 IconButton(
@@ -100,9 +107,13 @@ class CartScreen extends StatelessWidget {
                             children: [
                               const Expanded(child: Text('Delivery Fee')),
                               Text(
-                                'Free',
+                                deliveryFee == 0
+                                    ? 'Free'
+                                    : formatPrice(deliveryFee),
                                 style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: deliveryFee == 0
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
                                 ),
                               ),
                             ],
@@ -119,7 +130,7 @@ class CartScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                formatPrice(cart.total),
+                                formatPrice(grandTotal),
                                 style: Theme.of(context).textTheme.titleLarge
                                     ?.copyWith(fontWeight: FontWeight.bold),
                               ),

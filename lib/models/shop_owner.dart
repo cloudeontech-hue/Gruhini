@@ -14,7 +14,7 @@ class ShopOwner {
   /// Built from a row that only ever selects the public columns —
   /// [ShopOwnersProvider.load] explicitly excludes `password_hash` — even
   /// though the database itself doesn't enforce that restriction (see
-  /// scripts/supabase_schema_shop_owners.sql).
+  /// supabase/migrations/20260626123501_shop_owners.sql).
   factory ShopOwner.fromMap(Map<String, dynamic> map) => ShopOwner(
     id: map['id'] as String,
     username: map['username'] as String,

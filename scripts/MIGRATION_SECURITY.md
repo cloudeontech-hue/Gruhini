@@ -5,7 +5,7 @@ Run these steps once after deploying the new Flutter app version.
 ## 1. Run the SQL migration
 
 In the Supabase dashboard → **SQL Editor**, paste and run
-`scripts/supabase_schema_security.sql` in full.
+`supabase/migrations/20260702132100_security_hardening_bcrypt_auth.sql` in full.
 
 What it does:
 - Enables `pgcrypto` for bcrypt support

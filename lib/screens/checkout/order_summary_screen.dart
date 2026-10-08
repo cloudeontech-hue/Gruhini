@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/auth_provider.dart';
+import '../../state/business_settings_provider.dart';
 import '../../state/cart_provider.dart';
+import '../../utils/delivery_fee.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/responsive_center.dart';
 import 'payment_method_screen.dart';
@@ -13,7 +15,10 @@ class OrderSummaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final business = context.watch<BusinessSettingsProvider>();
     final cart = context.watch<CartProvider>();
+    final deliveryFee = calculateDeliveryFee(cart.total, business.settingsSnapshot);
+    final grandTotal = cart.total + deliveryFee;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Order Summary')),
@@ -100,9 +105,11 @@ class OrderSummaryScreen extends StatelessWidget {
                       children: [
                         const Expanded(child: Text('Delivery Fee')),
                         Text(
-                          'Free',
+                          deliveryFee == 0 ? 'Free' : formatPrice(deliveryFee),
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: deliveryFee == 0
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
                           ),
                         ),
                       ],
@@ -117,7 +124,7 @@ class OrderSummaryScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          formatPrice(cart.total),
+                          formatPrice(grandTotal),
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),

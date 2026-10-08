@@ -6,10 +6,47 @@ import '../../state/navigation_provider.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/formatters.dart';
 
-class OrderPlacedScreen extends StatelessWidget {
+class OrderPlacedScreen extends StatefulWidget {
   final List<Order> orders;
 
   const OrderPlacedScreen({super.key, required this.orders});
+
+  @override
+  State<OrderPlacedScreen> createState() => _OrderPlacedScreenState();
+}
+
+class _OrderPlacedScreenState extends State<OrderPlacedScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _checkScale;
+  late final Animation<double> _contentFade;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+    // Checkmark pops in first with a bouncy overshoot (Swiggy/Zomato-style
+    // success animation), then the summary card and buttons fade in once
+    // it's most of the way through - a plain linear fade felt flat since
+    // there's nothing else moving on this screen.
+    _checkScale = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.0, 0.65, curve: Curves.elasticOut),
+    );
+    _contentFade = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.45, 1.0, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   void _returnToRoot(BuildContext context) {
     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -17,6 +54,7 @@ class OrderPlacedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final orders = widget.orders;
     final total = orders.fold(0.0, (sum, o) => sum + o.total);
     final placedAt = orders.first.placedAt;
     final orderIds = orders.map((o) => '#${o.shortId}').join(', ');
@@ -38,81 +76,93 @@ class OrderPlacedScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
-                  child: CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer,
-                    child: Icon(
-                      Icons.check_circle_outline,
-                      size: 40,
-                      color: Theme.of(context).colorScheme.primary,
+                  child: ScaleTransition(
+                    scale: _checkScale,
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
+                      child: Icon(
+                        Icons.check_circle_outline,
+                        size: 40,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Order Placed!',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  paymentVerified
-                      ? 'Your order has been placed successfully. Payment is verified.'
-                      : 'Your order has been placed successfully. Payment is being verified.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _SummaryRow(label: 'Order ID', value: orderIds),
-                        _SummaryRow(
-                          label: 'Order Date',
-                          value:
-                              '${placedAt.day}/${placedAt.month}/${placedAt.year}',
-                        ),
-                        _SummaryRow(
-                          label: 'Total Amount',
-                          value: formatPrice(total),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Payment Status'),
-                            Chip(
-                              label: Text(statusLabel),
-                              backgroundColor: statusColor.withValues(
-                                alpha: 0.15,
+                FadeTransition(
+                  opacity: _contentFade,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Order Placed!',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        paymentVerified
+                            ? 'Your order has been placed successfully. Payment is verified.'
+                            : 'Your order has been placed successfully. Payment is being verified.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              _SummaryRow(label: 'Order ID', value: orderIds),
+                              _SummaryRow(
+                                label: 'Order Date',
+                                value:
+                                    '${placedAt.day}/${placedAt.month}/${placedAt.year}',
                               ),
-                              labelStyle: TextStyle(color: statusColor),
-                              side: BorderSide.none,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
+                              _SummaryRow(
+                                label: 'Total Amount',
+                                value: formatPrice(total),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Payment Status'),
+                                  Chip(
+                                    label: Text(statusLabel),
+                                    backgroundColor: statusColor.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    labelStyle: TextStyle(color: statusColor),
+                                    side: BorderSide.none,
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: () {
+                          context.read<NavigationProvider>().goToOrders();
+                          _returnToRoot(context);
+                        },
+                        child: const Text('View My Orders'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: () {
+                          context.read<NavigationProvider>().goToHome();
+                          _returnToRoot(context);
+                        },
+                        child: const Text('Continue Shopping'),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: () {
-                    context.read<NavigationProvider>().goToOrders();
-                    _returnToRoot(context);
-                  },
-                  child: const Text('View My Orders'),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton(
-                  onPressed: () {
-                    context.read<NavigationProvider>().goToHome();
-                    _returnToRoot(context);
-                  },
-                  child: const Text('Continue Shopping'),
                 ),
               ],
             ),

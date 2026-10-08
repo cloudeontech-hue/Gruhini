@@ -1,3 +1,7 @@
+import 'dart:io' show Platform;
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +11,7 @@ import 'utils/app_colors.dart';
 import 'utils/app_typography.dart';
 import 'screens/admin/admin_customers_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
-import 'screens/admin/admin_login_screen.dart';
+import 'screens/auth/staff_login_screen.dart';
 import 'screens/admin/admin_orders_screen.dart';
 import 'screens/admin/admin_products_screen.dart';
 import 'screens/admin/admin_settings_screen.dart';
@@ -29,6 +33,7 @@ import 'state/customers_provider.dart';
 import 'state/navigation_provider.dart';
 import 'state/orders_provider.dart';
 import 'state/products_provider.dart';
+import 'state/reviews_provider.dart';
 import 'state/shop_owners_provider.dart';
 import 'state/theme_provider.dart';
 import 'widgets/admin_sidebar.dart';
@@ -40,7 +45,16 @@ void main() async {
     url: dotenv.env['SUPABASE_URL']!,
     publishableKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
-  runApp(const GruinyFoodsApp());
+  // Firebase Phone Auth (customer OTP login, lib/screens/auth/login_screen.dart)
+  // is only registered for Android in the Firebase console so far
+  // (android/app/google-services.json) - iOS/web/Windows would each need
+  // their own Firebase app added before initializing there too, so this
+  // is deliberately Android-only for now rather than crashing on other
+  // platforms with no config to initialize from.
+  if (!kIsWeb && Platform.isAndroid) {
+    await Firebase.initializeApp();
+  }
+  runApp(const GruhiniFoodsApp());
 }
 
 ThemeData _buildTheme(Brightness brightness) {
@@ -279,8 +293,8 @@ ThemeData _buildTheme(Brightness brightness) {
   );
 }
 
-class GruinyFoodsApp extends StatelessWidget {
-  const GruinyFoodsApp({super.key});
+class GruhiniFoodsApp extends StatelessWidget {
+  const GruhiniFoodsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -288,6 +302,7 @@ class GruinyFoodsApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()..load()),
         ChangeNotifierProvider(create: (_) => ProductsProvider()..load()),
+        ChangeNotifierProvider(create: (_) => ReviewsProvider()..load()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => OrdersProvider()..load()),
         ChangeNotifierProvider(create: (_) => CustomersProvider()..load()),
@@ -523,13 +538,13 @@ class _AdminRootScreenState extends State<AdminRootScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    // Push the Admin Login screen *before* clearing auth state: this screen
+    // Push the staff login screen *before* clearing auth state: this screen
     // (the admin dashboard) is what AuthGate swaps away from the moment the
     // role changes to `none`, so its context would no longer be safely
     // usable for navigation afterwards.
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const AdminLoginScreen()));
+    ).push(MaterialPageRoute(builder: (_) => const StaffLoginScreen()));
     await context.read<AuthProvider>().logout();
   }
 

@@ -98,10 +98,13 @@ class _AddShopOwnerDialogState extends State<_AddShopOwnerDialog> {
       );
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
+      debugPrint('Could not add shop owner: $error');
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not add shop owner: $error')),
+          const SnackBar(
+            content: Text('Could not add this shop owner. Please try again.'),
+          ),
         );
       }
     }

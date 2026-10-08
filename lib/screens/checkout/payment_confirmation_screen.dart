@@ -40,10 +40,11 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
       final bytes = await pickProductImageBytes();
       if (bytes != null) setState(() => _screenshotBytes = bytes);
     } catch (error) {
+      debugPrint('Could not load payment screenshot: $error');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not load image: $error')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load that image. Please try again.')),
+        );
       }
     }
   }
@@ -80,9 +81,12 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
         );
       }
     } catch (error) {
+      debugPrint('Could not place order: $error');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not place order: $error')),
+          const SnackBar(
+            content: Text('Could not place order. Please try again.'),
+          ),
         );
       }
     } finally {

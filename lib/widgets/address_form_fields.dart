@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../screens/checkout/location_picker_screen.dart';
+import '../services/location_service.dart';
+
 /// Backing controllers for [AddressFormFields], shared by the delivery
 /// address screen and the profile address editor. [compose] prefixes the
 /// result with `[label]` (e.g. `[Home] ...`) — callers that display a saved
@@ -49,6 +52,38 @@ class _AddressFormFieldsState extends State<AddressFormFields> {
     'Other': Icons.location_on_outlined,
   };
 
+  bool _locating = false;
+
+  Future<void> _useCurrentLocation() async {
+    setState(() => _locating = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final result = await Navigator.of(context).push<ReverseGeocodedAddress>(
+        MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+      );
+      if (result == null) return; // user backed out without confirming
+      final c = widget.controllers;
+      if (c.flatNo.text.trim().isEmpty && result.houseNumber != null) {
+        c.flatNo.text = result.houseNumber!;
+      }
+      if (result.building != null) c.building.text = result.building!;
+      if (result.area != null) c.area.text = result.area!;
+      if (result.city != null) c.city.text = result.city!;
+      if (result.pincode != null) c.pincode.text = result.pincode!;
+      if (!mounted) return;
+      setState(() {});
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Location filled in - please check the house/flat number.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -56,6 +91,27 @@ class _AddressFormFieldsState extends State<AddressFormFields> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: _locating ? null : _useCurrentLocation,
+            icon: _locating
+                ? const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.my_location, size: 18),
+            label: Text(
+              _locating ? 'Locating...' : 'Use current location',
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: colorScheme.primary),
+              foregroundColor: colorScheme.primary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         _Field(
           controller: widget.controllers.flatNo,
           label: 'House / Flat / Floor No.',

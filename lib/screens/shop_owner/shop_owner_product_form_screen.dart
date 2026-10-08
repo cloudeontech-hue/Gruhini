@@ -92,10 +92,13 @@ class _ShopOwnerProductFormScreenState
       }
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
+      debugPrint('Could not save product: $error');
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save product: $error')),
+          const SnackBar(
+            content: Text('Could not save this product. Please try again.'),
+          ),
         );
       }
     }

@@ -6,19 +6,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:gruiny_foods/data/orders_data.dart';
-import 'package:gruiny_foods/data/products_data.dart';
-import 'package:gruiny_foods/main.dart';
-import 'package:gruiny_foods/models/cart_item.dart';
-import 'package:gruiny_foods/models/order.dart';
-import 'package:gruiny_foods/models/product.dart';
-import 'package:gruiny_foods/screens/order_details_screen.dart';
-import 'package:gruiny_foods/screens/product_details_screen.dart';
-import 'package:gruiny_foods/state/auth_provider.dart';
-import 'package:gruiny_foods/state/cart_provider.dart';
-import 'package:gruiny_foods/state/orders_provider.dart';
-import 'package:gruiny_foods/state/products_provider.dart';
-import 'package:gruiny_foods/widgets/product_image_picker.dart';
+import 'package:gruhini_foods/data/orders_data.dart';
+import 'package:gruhini_foods/data/products_data.dart';
+import 'package:gruhini_foods/main.dart';
+import 'package:gruhini_foods/models/cart_item.dart';
+import 'package:gruhini_foods/models/order.dart';
+import 'package:gruhini_foods/models/product.dart';
+import 'package:gruhini_foods/screens/checkout/order_placed_screen.dart';
+import 'package:gruhini_foods/screens/invoice_screen.dart';
+import 'package:gruhini_foods/screens/order_details_screen.dart';
+import 'package:gruhini_foods/screens/order_tracking_screen.dart';
+import 'package:gruhini_foods/screens/product_details_screen.dart';
+import 'package:gruhini_foods/state/auth_provider.dart';
+import 'package:gruhini_foods/state/business_settings_provider.dart';
+import 'package:gruhini_foods/state/cart_provider.dart';
+import 'package:gruhini_foods/state/orders_provider.dart';
+import 'package:gruhini_foods/state/reviews_provider.dart';
+import 'package:gruhini_foods/state/products_provider.dart';
+import 'package:gruhini_foods/models/business_settings.dart';
+import 'package:gruhini_foods/utils/delivery_fee.dart';
+import 'package:gruhini_foods/widgets/product_image_picker.dart';
 
 // A real, minimal 1x1 transparent PNG so Image.memory can actually decode it
 // in tests (arbitrary byte sequences fail decoding and report an error).
@@ -36,7 +43,7 @@ Future<void> _loginAsCustomer(
   await tester.binding.setSurfaceSize(const Size(390, 844));
   addTearDown(() => tester.binding.setSurfaceSize(null));
 
-  await tester.pumpWidget(const GruinyFoodsApp());
+  await tester.pumpWidget(const GruhiniFoodsApp());
   await tester.pumpAndSettle();
 
   // There's no real Supabase in this test environment, so ProductsProvider's
@@ -53,20 +60,17 @@ Future<void> _loginAsCustomer(
   await tester.tap(find.text('I am a Customer'));
   await tester.pumpAndSettle();
 
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Name'),
-    'Asha Rao',
-  );
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Phone Number'),
-    '9876543210',
-  );
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Password'),
-    'password123',
-  );
-
-  await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+  // The real login_or_create_customer RPC needs a live Supabase connection
+  // this test environment doesn't have - simulate a successful login
+  // directly instead, same reasoning as _loginAsAdmin below. LoginScreen
+  // itself pops on a real successful login (see its _submit()), so do the
+  // same here since this bypasses that screen's own pop.
+  final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
+  Provider.of<AuthProvider>(
+    tester.element(find.byType(MaterialApp)),
+    listen: false,
+  ).simulateCustomerLoginForTest(name: 'Asha Rao', phone: '9876543210');
+  navigator.pop();
   await tester.pumpAndSettle();
 }
 
@@ -74,22 +78,25 @@ Future<void> _loginAsAdmin(WidgetTester tester) async {
   await tester.binding.setSurfaceSize(const Size(390, 844));
   addTearDown(() => tester.binding.setSurfaceSize(null));
 
-  await tester.pumpWidget(const GruinyFoodsApp());
+  await tester.pumpWidget(const GruhiniFoodsApp());
   await tester.pumpAndSettle();
 
-  await tester.tap(find.text('I am Admin'));
+  await tester.tap(find.text('Shop Owner / Admin'));
   await tester.pumpAndSettle();
 
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Username'),
-    'admin',
-  );
-  await tester.enterText(
-    find.widgetWithText(TextFormField, 'Password'),
-    'admin123',
-  );
-
-  await tester.tap(find.widgetWithText(FilledButton, 'Login'));
+  // The real authenticate_admin RPC needs a live Supabase connection this
+  // test environment doesn't have - simulate a successful login directly
+  // instead (there's no dev-credential bypass in the login form itself
+  // anymore, by design - see AuthProvider.loginAsStaff). StaffLoginScreen
+  // itself pops on a real successful login (see its _submit()) to reveal
+  // AuthGate's now-updated base content - do the same here since this
+  // bypasses that screen's own pop.
+  final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
+  Provider.of<AuthProvider>(
+    tester.element(find.byType(MaterialApp)),
+    listen: false,
+  ).simulateAdminLoginForTest(username: 'admin');
+  navigator.pop();
   await tester.pumpAndSettle();
 }
 
@@ -101,13 +108,13 @@ void main() {
   testWidgets('App opens to the role selection screen when logged out', (
     tester,
   ) async {
-    await tester.pumpWidget(const GruinyFoodsApp());
+    await tester.pumpWidget(const GruhiniFoodsApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Welcome Back!'), findsOneWidget);
     expect(find.text('I am a Customer'), findsOneWidget);
-    expect(find.text('I am a Shop Owner'), findsOneWidget);
-    expect(find.text('I am Admin'), findsOneWidget);
+    // Shop Owner and Admin share one combined staff login option.
+    expect(find.text('Shop Owner / Admin'), findsOneWidget);
   });
 
   testWidgets('Customer can log in and reach the bottom navigation tabs', (
@@ -124,8 +131,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Asha Rao'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('Logout'), 100);
-    expect(find.text('Logout'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Log out'), 100);
+    expect(find.text('Log out'), findsOneWidget);
   });
 
   testWidgets(
@@ -230,7 +237,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Logout'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Gruhini Foods Admin'), findsOneWidget);
+    expect(find.text('Staff Login'), findsOneWidget);
     expect(find.text('Dashboard'), findsNothing);
 
     // Back navigation must never reveal the dashboard again: pop everything
@@ -250,20 +257,19 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1200, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const GruinyFoodsApp());
+      await tester.pumpWidget(const GruhiniFoodsApp());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('I am Admin'));
+      await tester.tap(find.text('Shop Owner / Admin'));
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Username'),
-        'admin',
+      final navigator = tester.state<NavigatorState>(
+        find.byType(Navigator).first,
       );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Password'),
-        'admin123',
-      );
-      await tester.tap(find.widgetWithText(FilledButton, 'Login'));
+      Provider.of<AuthProvider>(
+        tester.element(find.byType(MaterialApp)),
+        listen: false,
+      ).simulateAdminLoginForTest(username: 'admin');
+      navigator.pop();
       await tester.pumpAndSettle();
 
       // The sidebar (with all 5 sections + Logout) should already be on
@@ -280,7 +286,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Logout'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Gruhini Foods Admin'), findsOneWidget);
+      expect(find.text('Staff Login'), findsOneWidget);
       expect(find.text('Dashboard'), findsNothing);
     },
   );
@@ -305,6 +311,45 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.textContaining('Order #'), findsWidgets);
   });
+
+  testWidgets(
+    'Home shows an Order Again row for products from past orders',
+    (tester) async {
+      await _loginAsCustomer(tester, seedProducts: productsData);
+
+      final reorderedProduct = productsData.first;
+      Provider.of<OrdersProvider>(
+        tester.element(find.byType(MaterialApp)),
+        listen: false,
+      ).seedForTest([
+        Order(
+          id: 'o1',
+          customerName: 'Asha Rao',
+          customerPhone: '9876543210',
+          deliveryAddress: '12 MG Road, Bengaluru - 560001',
+          items: [
+            OrderLineItem(
+              productName: reorderedProduct.name,
+              price: reorderedProduct.price,
+              quantity: 2,
+              productId: reorderedProduct.id,
+            ),
+          ],
+          total: reorderedProduct.price * 2,
+          placedAt: DateTime(2026, 6, 18),
+          shopOwnerId: reorderedProduct.shopOwnerId,
+          status: OrderStatus.delivered,
+          paymentVerified: true,
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Order Again'), findsOneWidget);
+      // Appears in both the Order Again row and the main catalog grid below.
+      expect(find.text(reorderedProduct.name), findsWidgets);
+    },
+  );
 
   testWidgets(
     'Home grid shows at least 4 compact product cards without scrolling',
@@ -369,14 +414,14 @@ void main() {
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Dark Mode'), findsOneWidget);
+    expect(find.text('Dark mode'), findsOneWidget);
 
     final materialAppBefore = tester.widget<MaterialApp>(
       find.byType(MaterialApp),
     );
     expect(materialAppBefore.themeMode, ThemeMode.light);
 
-    await tester.tap(find.widgetWithText(SwitchListTile, 'Dark Mode'));
+    await tester.tap(find.widgetWithText(SwitchListTile, 'Dark mode'));
     await tester.pumpAndSettle();
 
     final materialAppAfter = tester.widget<MaterialApp>(
@@ -393,11 +438,11 @@ void main() {
       await tester.tap(find.text('Profile'));
       await tester.pumpAndSettle();
 
-      expect(find.text('9876543210'), findsOneWidget);
+      expect(find.text('+91 9876543210'), findsOneWidget);
       // No address saved yet - the fresh test customer never set one.
       expect(find.text('Not set'), findsOneWidget);
 
-      await tester.tap(find.text('My Addresses'));
+      await tester.tap(find.text('Delivery address'));
       await tester.pumpAndSettle();
       expect(find.text('My Addresses'), findsWidgets);
       expect(find.text('Add Address'), findsOneWidget);
@@ -422,8 +467,51 @@ void main() {
       await tester.pumpAndSettle();
 
       // Back on the Profile screen with the freshly saved address showing.
-      expect(find.text('My Addresses'), findsOneWidget);
+      expect(find.text('Delivery address'), findsOneWidget);
       expect(find.textContaining('MG Road'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Customer can delete their account from the Profile screen',
+    (tester) async {
+      await _loginAsCustomer(tester);
+
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
+
+      final auth = Provider.of<AuthProvider>(
+        tester.element(find.byType(MaterialApp)),
+        listen: false,
+      );
+      expect(auth.role, AppRole.customer);
+
+      await tester.scrollUntilVisible(find.text('Delete account'), 100);
+      await tester.tap(find.text('Delete account'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('This cannot be undone. Continue?'),
+        findsOneWidget,
+      );
+
+      // Cancel first - must leave the account untouched.
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(auth.role, AppRole.customer);
+
+      // Now actually confirm.
+      await tester.scrollUntilVisible(find.text('Delete account'), 100);
+      await tester.tap(find.text('Delete account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(auth.role, AppRole.none);
+      expect(auth.customerPhone, isEmpty);
+      // Back at role selection - the account is gone, not just logged out
+      // of a still-existing one.
+      expect(find.text('Welcome Back!'), findsOneWidget);
     },
   );
 
@@ -602,6 +690,7 @@ void main() {
           providers: [
             ChangeNotifierProvider(create: (_) => CartProvider()),
             ChangeNotifierProvider(create: (_) => ProductsProvider()),
+            ChangeNotifierProvider(create: (_) => ReviewsProvider()),
           ],
           child: MaterialApp(home: ProductDetailsScreen(product: product)),
         ),
@@ -813,6 +902,119 @@ void main() {
     });
   });
 
+  testWidgets(
+    'OrderTrackingScreen lists every ordered item with its name and quantity',
+    (tester) async {
+      final order = Order(
+        id: 'o1',
+        customerName: 'Asha Rao',
+        customerPhone: '9876543210',
+        deliveryAddress: '12 MG Road, Bengaluru - 560001',
+        items: const [
+          OrderLineItem(productName: 'Murukku', price: 120, quantity: 2),
+          OrderLineItem(productName: 'Banana Chips', price: 90, quantity: 1),
+        ],
+        total: 330,
+        placedAt: DateTime(2026, 6, 18),
+        shopOwnerId: 's1',
+        status: OrderStatus.preparing,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => OrdersProvider()),
+          ],
+          child: MaterialApp(home: OrderTrackingScreen(order: order)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Order Items'), findsOneWidget);
+      expect(find.text('Murukku x2'), findsOneWidget);
+      expect(find.text('Banana Chips x1'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'OrderPlacedScreen animates in the success checkmark and order summary',
+    (tester) async {
+      final order = Order(
+        id: 'o1',
+        customerName: 'Asha Rao',
+        customerPhone: '9876543210',
+        deliveryAddress: '12 MG Road, Bengaluru - 560001',
+        items: const [
+          OrderLineItem(productName: 'Murukku', price: 120, quantity: 2),
+        ],
+        total: 240,
+        placedAt: DateTime(2026, 6, 18),
+        shopOwnerId: 's1',
+        paymentVerified: true,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: OrderPlacedScreen(orders: [order])),
+      );
+
+      // Mid-animation: the checkmark/content shouldn't error out before the
+      // AnimationController finishes settling.
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Order Placed!'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      expect(find.text('Verified'), findsOneWidget);
+      expect(find.text('View My Orders'), findsOneWidget);
+      expect(find.text('Continue Shopping'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'InvoiceScreen renders an itemized bill with total and payment status',
+    (tester) async {
+      final order = Order(
+        id: 'o1',
+        customerName: 'Asha Rao',
+        customerPhone: '9876543210',
+        deliveryAddress: '12 MG Road, Bengaluru - 560001',
+        items: const [
+          OrderLineItem(productName: 'Murukku', price: 120, quantity: 2),
+          OrderLineItem(productName: 'Banana Chips', price: 90, quantity: 1),
+        ],
+        total: 330,
+        placedAt: DateTime(2026, 6, 18),
+        shopOwnerId: 's1',
+        paymentMethod: 'razorpay',
+        paymentVerified: true,
+        transactionId: 'pay_test123',
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => BusinessSettingsProvider()),
+          ],
+          child: MaterialApp(home: InvoiceScreen(order: order)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('ORDER INVOICE'), findsOneWidget);
+      expect(find.text('#${order.shortId}'), findsOneWidget);
+      expect(find.text('Murukku'), findsOneWidget);
+      expect(find.text('₹240'), findsOneWidget);
+      expect(find.text('₹330'), findsOneWidget);
+      expect(find.text('Paid'), findsOneWidget);
+      expect(find.text('Online (Razorpay)'), findsOneWidget);
+      expect(find.text('pay_test123'), findsOneWidget);
+    },
+  );
+
   group('OrdersProvider.buildOrderForTest field mapping', () {
     // buildOrderForTest exposes exactly the field-mapping logic placeOrder()
     // uses internally, without requiring a live Supabase connection - see
@@ -871,5 +1073,214 @@ void main() {
         expect(order.status, OrderStatus.paymentVerification);
       },
     );
+  });
+
+  group('calculateDeliveryFee', () {
+    const settings = BusinessSettings(
+      businessName: 'Gruhini Foods',
+      supportPhone: '',
+      upiId: '',
+      upiQrUrl: '',
+      deliveryFee: 40,
+      freeDeliveryAbove: 500,
+    );
+
+    test('charges the flat fee below the free-delivery threshold', () {
+      expect(calculateDeliveryFee(499, settings), 40);
+    });
+
+    test('waives the fee at exactly the free-delivery threshold', () {
+      expect(calculateDeliveryFee(500, settings), 0);
+    });
+
+    test('waives the fee above the free-delivery threshold', () {
+      expect(calculateDeliveryFee(1000, settings), 0);
+    });
+
+    test('charges the flat fee when no free-delivery threshold is set', () {
+      const noThreshold = BusinessSettings(
+        businessName: 'Gruhini Foods',
+        supportPhone: '',
+        upiId: '',
+        upiQrUrl: '',
+        deliveryFee: 40,
+      );
+      expect(calculateDeliveryFee(100000, noThreshold), 40);
+    });
+
+    test('is free by default (before an admin configures anything)', () {
+      const defaults = BusinessSettings(
+        businessName: 'Gruhini Foods',
+        supportPhone: '',
+        upiId: '',
+        upiQrUrl: '',
+      );
+      expect(calculateDeliveryFee(10, defaults), 0);
+    });
+  });
+
+  group('isPincodeServiceable', () {
+    test('delivers everywhere when no pincodes are configured', () {
+      const settings = BusinessSettings(
+        businessName: 'Gruhini Foods',
+        supportPhone: '',
+        upiId: '',
+        upiQrUrl: '',
+      );
+      expect(isPincodeServiceable('560001', settings), isTrue);
+      expect(isPincodeServiceable('', settings), isTrue);
+    });
+
+    test('only allows configured pincodes once the list is populated', () {
+      const settings = BusinessSettings(
+        businessName: 'Gruhini Foods',
+        supportPhone: '',
+        upiId: '',
+        upiQrUrl: '',
+        serviceablePincodes: ['560001', '560002'],
+      );
+      expect(isPincodeServiceable('560001', settings), isTrue);
+      expect(isPincodeServiceable('560099', settings), isFalse);
+    });
+  });
+
+  group('OrdersProvider.canCustomerCancel', () {
+    // Mirrors the published refunds policy: cancellable only while still in
+    // Payment Verification, since once a shop owner accepts, food is being
+    // prepared fresh to order.
+    Order orderWithStatus(OrderStatus status) => OrdersProvider()
+        .buildOrderForTest(
+          id: 'o1',
+          customerName: 'Asha Rao',
+          customerPhone: '9876543210',
+          deliveryAddress: '12 MG Road, Bengaluru - 560001',
+          shopOwnerId: productsData.first.shopOwnerId,
+          items: [CartItem(product: productsData.first, quantity: 1)],
+          paymentMethod: 'razorpay',
+        )
+      ..status = status;
+
+    test('allows cancelling while payment is still being verified', () {
+      final provider = OrdersProvider();
+      expect(
+        provider.canCustomerCancel(
+          orderWithStatus(OrderStatus.paymentVerification),
+        ),
+        isTrue,
+      );
+    });
+
+    test('blocks cancelling once the order has been accepted or later', () {
+      final provider = OrdersProvider();
+      for (final status in [
+        OrderStatus.accepted,
+        OrderStatus.preparing,
+        OrderStatus.outForDelivery,
+        OrderStatus.delivered,
+        OrderStatus.cancelled,
+      ]) {
+        expect(
+          provider.canCustomerCancel(orderWithStatus(status)),
+          isFalse,
+          reason: '$status must not be customer-cancellable',
+        );
+      }
+    });
+  });
+
+  group('CartProvider.addFromOrder (Reorder)', () {
+    test('matches by productId and adds the ordered quantity', () {
+      final cart = CartProvider();
+      final murukku = productsData.first;
+      final result = cart.addFromOrder([
+        OrderLineItem(
+          productName: murukku.name,
+          price: murukku.price,
+          quantity: 3,
+          productId: murukku.id,
+        ),
+      ], productsData);
+
+      expect(result.addedCount, 1);
+      expect(result.unavailable, isEmpty);
+      expect(cart.quantityOf(murukku.id), 3);
+    });
+
+    test(
+      'falls back to matching by productName when productId is null '
+      '(orders placed before that field existed)',
+      () {
+        final cart = CartProvider();
+        final murukku = productsData.first;
+        final result = cart.addFromOrder([
+          OrderLineItem(
+            productName: murukku.name,
+            price: murukku.price,
+            quantity: 1,
+          ),
+        ], productsData);
+
+        expect(result.addedCount, 1);
+        expect(cart.quantityOf(murukku.id), 1);
+      },
+    );
+
+    test(
+      'skips and reports a product that no longer exists in the catalog',
+      () {
+        final cart = CartProvider();
+        final result = cart.addFromOrder([
+          const OrderLineItem(
+            productName: 'Discontinued Snack',
+            price: 50,
+            quantity: 1,
+            productId: 'no-such-id',
+          ),
+        ], productsData);
+
+        expect(result.addedCount, 0);
+        expect(result.unavailable, ['Discontinued Snack']);
+        expect(cart.items, isEmpty);
+      },
+    );
+
+    test('skips and reports a product that is currently out of stock', () {
+      final cart = CartProvider();
+      final outOfStock = productsData.first.copy()..inStock = false;
+      final result = cart.addFromOrder([
+        OrderLineItem(
+          productName: outOfStock.name,
+          price: outOfStock.price,
+          quantity: 1,
+          productId: outOfStock.id,
+        ),
+      ], [outOfStock, ...productsData.skip(1)]);
+
+      expect(result.addedCount, 0);
+      expect(result.unavailable, [outOfStock.name]);
+    });
+
+    test('adds available items and reports unavailable ones together', () {
+      final cart = CartProvider();
+      final available = productsData.first;
+      final result = cart.addFromOrder([
+        OrderLineItem(
+          productName: available.name,
+          price: available.price,
+          quantity: 2,
+          productId: available.id,
+        ),
+        const OrderLineItem(
+          productName: 'Discontinued Snack',
+          price: 50,
+          quantity: 1,
+          productId: 'no-such-id',
+        ),
+      ], productsData);
+
+      expect(result.addedCount, 1);
+      expect(result.unavailable, ['Discontinued Snack']);
+      expect(cart.quantityOf(available.id), 2);
+    });
   });
 }

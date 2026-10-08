@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/app_colors.dart';
@@ -61,8 +60,8 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   padding: const EdgeInsets.all(4),
                   child: ClipOval(
-                    child: SvgPicture.asset(
-                      'assets/images/logo.svg',
+                    child: Image.asset(
+                      'assets/images/logo.png',
                       fit: BoxFit.cover,
                     ),
                   ),
