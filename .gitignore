@@ -52,6 +52,9 @@ app.*.map.json
 *.jks
 *.keystore
 
+# Firebase config (contains API key/OAuth client IDs) - kept local-only
+/android/app/google-services.json
+
 # Supabase CLI local state (project ref, pooler URL, version pins) - not
 # secrets, but local machine/CLI cache, not project source.
 /supabase/.temp/
